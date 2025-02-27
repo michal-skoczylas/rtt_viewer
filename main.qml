@@ -16,10 +16,21 @@ Window {
 
         Connections {
             target: rtt_connect_button
-            text: "Connect to RTT"
             onClicked: {
                 rttHandler.read_rtt()
             }
         }
+    }
+
+    TextEdit {
+        id: rtt_output
+           x: 128
+           y: 102
+           width: 338
+           height: 253
+           text: rttHandler.received_data
+           readOnly: true
+           wrapMode: TextEdit.Wrap
+           font.pixelSize: 12
     }
 }

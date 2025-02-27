@@ -7,19 +7,31 @@ import asyncio
 import qasync
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Slot, Property, Signal
 
 
 class RTTHandler(QObject):
+    received_data_changed = Signal()  # Signal emitted when data changes
+
     def __init__(self):
         super().__init__()
+        self._received_data = ""
+
+    @Property(str, notify=received_data_changed)
+    def received_data(self):
+        return self._received_data
+
+    @received_data.setter
+    def received_data(self, value):
+        if self._received_data != value:
+            self._received_data = value
+            self.received_data_changed.emit()  # Emit signal when data changes
 
     @Slot()
     def read_rtt(self):
         asyncio.create_task(self._read_rtt())
 
     async def _read_rtt(self):
-        #parameters
         host = "localhost"
         port = 19021
         
@@ -36,7 +48,8 @@ class RTTHandler(QObject):
                 data = await reader.read(1024)  # Read 1024 bytes
                 if data:
                     print("Received: ", data.strip())
-                    
+                    self.received_data = data.strip()  # Set the received data
+                
                 await asyncio.sleep(0.1)
         except Exception as e:
             print("Error: ", e)
