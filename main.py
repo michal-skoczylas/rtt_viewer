@@ -15,17 +15,16 @@ class RTTHandler(QObject):
 
     def __init__(self):
         super().__init__()
-        self._received_data = ""
+        self._received_data = []
+        self._max_lines = 10
+        
 
     @Property(str, notify=received_data_changed)
     def received_data(self):
-        return self._received_data
-
-    @received_data.setter
-    def received_data(self, value):
-        if self._received_data != value:
-            self._received_data = value
-            self.received_data_changed.emit()  # Emit signal when data changes
+        return "\n".join(self._received_data[-self._max_lines:])
+    def add_received_data(self, data):
+        self._received_data.append(data)
+        self.received_data_changed.emit()  # Emit signal when data changes
 
     @Slot()
     def read_rtt(self):
@@ -48,8 +47,7 @@ class RTTHandler(QObject):
                 data = await reader.read(1024)  # Read 1024 bytes
                 if data:
                     print("Received: ", data.strip())
-                    self.received_data = data.strip()  # Set the received data
-                
+                    self.add_received_data(data.strip()) 
                 await asyncio.sleep(0.1)
         except Exception as e:
             print("Error: ", e)
