@@ -16,8 +16,8 @@ class RTTHandler(QObject):
     def __init__(self):
         super().__init__()
         self._received_data = []
-        self._max_lines = 10
-        
+        self._max_lines = 20
+        self._writer = None        
 
     @Property(str, notify=received_data_changed)
     def received_data(self):
@@ -29,6 +29,7 @@ class RTTHandler(QObject):
     @Slot()
     def read_rtt(self):
         asyncio.create_task(self._read_rtt())
+        
 
     async def _read_rtt(self):
         host = "localhost"
@@ -38,7 +39,7 @@ class RTTHandler(QObject):
         
         # Connect to telnet
         reader, writer = await telnetlib3.open_connection(host, port)
-        
+        self._writer = writer        
         print("Connected with RTT, Waiting for data...")
         
         try:
@@ -55,6 +56,13 @@ class RTTHandler(QObject):
             print("Closing connection")
             writer.close()
             await writer.wait_closed()
+    @Slot(str)
+    def senddata(self,data):
+        if self._writer and data:
+            print(f"Sending data: {data}")
+            self._writer.write(data + "\n")
+            self.add_received_data(f"Sent: {data}")
+            
 
 
 if __name__ == "__main__":
