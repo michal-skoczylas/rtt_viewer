@@ -8,7 +8,7 @@ import qasync
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QObject, Slot, Property, Signal
-
+import pyudev
 
 class RTTHandler(QObject):
     received_data_changed = Signal()  # Signal emitted when data changes
@@ -63,6 +63,15 @@ class RTTHandler(QObject):
             self._writer.write(data + "\n")
             self.add_received_data(f"Sent: {data}")
             
+    @Slot(result=list)
+    def get_usb_devices(self):
+        context = pyudev.Context()
+        devices = []
+        for device in context.list_devices(subsystem='usb',DEVTYPE='usb_device'):
+            device_name = device.get('ID_MODEL', 'Unknown')
+            device_node = device.device_node.rsplit('/', 1)[-1]
+            devices.append(f"{device_name}")
+        return devices
 
 
 if __name__ == "__main__":
