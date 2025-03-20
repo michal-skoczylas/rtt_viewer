@@ -19,14 +19,16 @@ class RTTHandler(QObject):
         self._received_data = []
         self._max_lines = 20
         self._writer = None        
+        self._last_command_data=[]
 
  
         
     @Property(str, notify=received_data_changed)
     def received_data(self):
-        return "\n".join(self._received_data[-self._max_lines:])
+        return "\n".join(self._last_command_data[-self._max_lines:])    
     def add_received_data(self, data):
         self._received_data.append(data)
+        self._last_command_data.append(data)
         self.received_data_changed.emit()  # Emit signal when data changes
 
     @Slot()
@@ -78,11 +80,25 @@ class RTTHandler(QObject):
     @Slot()
     def send_hejka(self):
         print("Sending hejka")
+        self._last_command_data.clear()
         self._writer.write("hejka")
+    @Slot()    
+    def select_save_path(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getSaveFileName(
+            None,"Save rtt data","","Text Files (*.txt);;All Files (*)"
+        )
+        if file_path:
+            print(f"Selected save path: {file_path}")
+            self.save_rtt_data_to_file(file_path)
         
-    def select_save_path():
-        
-        pass
+        def save_rtt_data_to_file(self,filepath):
+            try:
+                with open(filepath,"w") as file:
+                    file.write("\n".join(self._last_command_data))
+                print(f"data saved to: {filepath}")
+            except Exception as e:
+                print(f"Error saving file: {e}")
     @Slot(str)
     def send_and_listen(self):
         pass
