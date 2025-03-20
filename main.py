@@ -8,6 +8,7 @@ import qasync
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QObject, Slot, Property, Signal
+from PySide6.QtWidgets import QFileDialog
 import pyudev
 
 class RTTHandler(QObject):
@@ -19,6 +20,8 @@ class RTTHandler(QObject):
         self._max_lines = 20
         self._writer = None        
 
+ 
+        
     @Property(str, notify=received_data_changed)
     def received_data(self):
         return "\n".join(self._received_data[-self._max_lines:])
@@ -72,7 +75,17 @@ class RTTHandler(QObject):
             device_node = device.device_node.rsplit('/', 1)[-1]
             devices.append(f"{device_name}")
         return devices
-
+    @Slot()
+    def send_hejka(self):
+        print("Sending hejka")
+        self._writer.write("hejka")
+        
+    def select_save_path():
+        
+        pass
+    @Slot(str)
+    def send_and_listen(self):
+        pass
 
 if __name__ == "__main__":
 

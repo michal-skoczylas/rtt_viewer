@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls 2.15
+import QtQuick.Dialogs
 
 Window {
     width: 640
@@ -9,7 +10,7 @@ Window {
     title: qsTr("RTT Viewer")
 
     Rectangle {
-        id: rectangle
+        id: bckg
         x: 29
         y: 22
         width: 430
@@ -18,7 +19,7 @@ Window {
 
         TextEdit {
             id: rtt_input
-            text: qsTr("Text Edit")
+            text: qsTr("")
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: rtt_output.bottom
@@ -42,19 +43,9 @@ Window {
 
         Button {
             id: rtt_connect_button
-            x: 11
             y: 16
             width: 375
             text: qsTr("Connect")
-            anchors.left: rtt_output.right
-            anchors.right: rtt_output.left
-            anchors.top: rtt_output.bottom
-            anchors.bottom: rtt_output.top
-            anchors.leftMargin: -357
-            anchors.rightMargin: 8
-            anchors.topMargin: -317
-            anchors.bottomMargin: 38
-            anchors.horizontalCenter: rtt_output.horizontalCenter
 
             Connections {
                 target: rtt_connect_button
@@ -65,34 +56,62 @@ Window {
         }
     }
 
-    ComboBox {
-        id: comboBox
-               x: 434
-               y: 44
-               width: 200
-               model: rttHandler.get_usb_devices()
+    Button {
+        id: button
+        x: 472
+        y: 51
+        text: qsTr("send")
 
-               // // Dostosowanie popup
-               // popup: Popup {
-               //     width: 300  // Szerokość rozwijanej listy
-               //     y: comboBox.height  // Pozycja Y poniżej ComboBox
-               //     parent: Overlay.overlay  // Ustaw rodzica na Overlay, aby mógł wystawać poza okno
-
-               //     contentItem: ListView {
-               //         implicitHeight: contentHeight
-               //         model: comboBox.popup.visible ? comboBox.delegateModel : null
-               //         currentIndex: comboBox.highlightedIndex
-
-               //         delegate: ItemDelegate {
-               //             width: comboBox.popup.width
-               //             text: modelData
-               //             highlighted: comboBox.highlightedIndex === index
-               //             onClicked: {
-               //                 comboBox.currentIndex = index
-               //                 comboBox.popup.close()
-               //             }
-               //         }
-               //     }
-               // }
+        Connections {
+            target: button
+            onClicked: {rttHandler.send_hejka()}
+        }
     }
+
+    Button {
+        id: path_button
+        x: 472
+        y: 104
+        text: qsTr("path")
+        onClicked: fileDialog.open()
+    }
+    FileDialog {
+                id: fileDialog
+                title: "Save Response"
+
+                onAccepted: {
+                    rttHandler.set_save_path(fileDialog.fileUrl.toString().replace("file://", ""))
+                }
+            }
+
+    // ComboBox {
+    //     id: comboBox
+    //            x: 434
+    //            y: 44
+    //            width: 200
+    //            model: rttHandler.get_usb_devices()
+
+    //            // // Dostosowanie popup
+    //            // popup: Popup {
+    //            //     width: 300  // Szerokość rozwijanej listy
+    //            //     y: comboBox.height  // Pozycja Y poniżej ComboBox
+    //            //     parent: Overlay.overlay  // Ustaw rodzica na Overlay, aby mógł wystawać poza okno
+
+    //            //     contentItem: ListView {
+    //            //         implicitHeight: contentHeight
+    //            //         model: comboBox.popup.visible ? comboBox.delegateModel : null
+    //            //         currentIndex: comboBox.highlightedIndex
+
+    //            //         delegate: ItemDelegate {
+    //            //             width: comboBox.popup.width
+    //            //             text: modelData
+    //            //             highlighted: comboBox.highlightedIndex === index
+    //            //             onClicked: {
+    //            //                 comboBox.currentIndex = index
+    //            //                 comboBox.popup.close()
+    //            //             }
+    //            //         }
+    //            //     }
+    //            // }
+    // }
 }
