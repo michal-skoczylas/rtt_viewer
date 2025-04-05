@@ -60,13 +60,7 @@ class RTTHandler(QObject):
             print("Closing connection")
             writer.close()
             await writer.wait_closed()
-    @Slot(str)
-    def senddata(self,data):
-        if self._writer and data:
-            print(f"Sending data: {data}")
-            self._writer.write(data + "\n")
-            self.add_received_data(f"Sent: {data}")
-            
+   #Get device list 
     @Slot(result=list)
     def get_usb_devices(self):
         context = pyudev.Context()
@@ -76,11 +70,7 @@ class RTTHandler(QObject):
             device_node = device.device_node.rsplit('/', 1)[-1]
             devices.append(f"{device_name}")
         return devices
-    @Slot()
-    def send_hejka(self):
-        print("Sending hejka")
-        self._last_command_data.clear()
-        self._writer.write("hejka")
+    #Select Save Path    
     @Slot()    
     def select_save_path(self):
         file_dialog = QFileDialog()
@@ -98,6 +88,4 @@ class RTTHandler(QObject):
                 print(f"data saved to: {filepath}")
             except Exception as e:
                 print(f"Error saving file: {e}")
-    @Slot(str)
-    def send_and_listen(self):
-        pass
+    
