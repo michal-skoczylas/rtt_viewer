@@ -10,7 +10,7 @@ venv/
 env/
 Pipfile.lock
 poetry.lock
-
+.qtcreator/
 # === PySide6 / Qt ===
 *.qrc
 *.qmlc
@@ -29,6 +29,7 @@ poetry.lock
 *.rcc
 *.res
 *.rc
+*pyproject.user
 
 moc_*.cpp
 ui_*.h
