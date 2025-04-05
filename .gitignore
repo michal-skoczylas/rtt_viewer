@@ -1,82 +1,93 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+.venv/
+venv/
+env/
+Pipfile.lock
+poetry.lock
 
-*~
-*.autosave
-*.a
-*.core
+# === PySide6 / Qt ===
+*.qrc
+*.qmlc
+*.jsc
 *.moc
-*.o
 *.obj
-*.orig
-*.rej
+*.o
 *.so
 *.so.*
-*_pch.h.cpp
-*_resource.rc
-*.qm
-.#*
-*.*#
-core
-!core/
-tags
-.DS_Store
-.directory
-*.debug
-Makefile*
-*.prl
+*.a
+*.lib
+*.dll
+*.exe
 *.app
+*.dSYM/
+*.rcc
+*.res
+*.rc
+
 moc_*.cpp
 ui_*.h
 qrc_*.cpp
-Thumbs.db
-*.res
-*.rc
-/.qmake.cache
-/.qmake.stash
 
-# qtcreator generated files
+# Build directories
+/build*/
+build-*/
+
+# === Qt Creator ===
 *.pro.user*
 *.qbs.user*
+*.autosave
+.qmake.*
+*.pro.user
+*.qbs.user
+*.qmlproject.user
 CMakeLists.txt.user*
 
-# xemacs temporary files
-*.flc
+# === CMake ===
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+*.cmake
 
-# Vim temporary files
-.*.swp
+# === Editor & OS ===
+.DS_Store
+.directory
+*.swp
+*.swo
+*~
+.#*
+*.*#
+Thumbs.db
+tags
 
-# Visual Studio generated files
-*.ib_pdb_index
-*.idb
-*.ilk
-*.pdb
-*.sln
-*.suo
-*.vcproj
-*vcproj.*.*.user
-*.ncb
-*.sdf
-*.opensdf
-*.vcxproj
-*vcxproj.*
+# === VSCode ===
+.vscode/
+.history/
+.code-workspace
 
-# MinGW generated files
-*.Debug
-*.Release
+# === Logs & Debug ===
+*.log
+*.debug
+*.bak
 
-# Python byte code
-*.pyc
+# === Git ===
+*.orig
+*.rej
 
-# Binaries
-# --------
-*.dll
-*.exe
+# === IDE-specific ===
+.idea/
+*.sublime*
 
-# Directories with generated files
-.moc/
-.obj/
-.pch/
-.rcc/
-.uic/
-/build*/
+# === Misc ===
+*.zip
+*.tar.gz
+*.tgz
+*.tmp
+*.cache
