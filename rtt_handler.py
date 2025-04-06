@@ -10,6 +10,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QObject, Slot, Property, Signal
 from PySide6.QtWidgets import QFileDialog
 import pyudev
+import tree
 class RTTHandler(QObject):
     received_data_changed = Signal()  # Signal emitted when data changes
 
