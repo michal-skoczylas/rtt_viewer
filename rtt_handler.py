@@ -61,6 +61,30 @@ class RTTHandler(QObject):
             print("Closing connection")
             writer.close()
             await writer.wait_closed()
+    #Send file_list command to rtt and read response
+    @Slot()
+    def send_file_list_command(self):
+        if self._writer:
+            command = 'file_list\n'
+            self._writer.write(command)
+            print(f"Sent command: {command.strip()}")
+            asyncio.create_task(self._read_file_list_response())
+    async def _read_file_list_response(self):
+        if self._writer:
+            try:
+                data = await self._writer.read(1024)  # Read 1024 bytes
+                if data:
+                    print("Received file list: ", data.strip())
+                    self.add_received_data(data.strip()) 
+                    tree_obj = tree.Tree("root")
+                    tree_obj = tree_obj.from_string(data)
+                    tree_obj.print_tree()
+                await asyncio.sleep(0.1)
+            except Exception as e:
+                print("Error: ", e)
+        
+    
+    
    #Get device list 
     @Slot(result=list)
     def get_usb_devices(self):
