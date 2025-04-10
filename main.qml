@@ -82,6 +82,28 @@ Window {
                 onAccepted: {
                     rttHandler.set_save_path(fileDialog.fileUrl.toString().replace("file://", ""))
                 }
+    }
+
+            Rectangle {
+                id: background
+                x: 0
+                y: 0
+                width: 640
+                height: 480
+                color: "#e3e0e0"
+
+                Button {
+                    id: get_files_combobox
+                    x: 40
+                    y: 74
+                    text: qsTr("Button")
+                }
+
+                ComboBox {
+                    id: dir_comboBox
+                    x: 195
+                    y: 76
+                }
             }
 
     // ComboBox {

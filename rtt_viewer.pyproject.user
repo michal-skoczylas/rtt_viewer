@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 15.0.1, 2025-03-01T16:16:23. -->
+<!-- Written by QtCreator 15.0.1, 2025-04-10T22:58:55. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -99,13 +99,11 @@
    <value type="qlonglong" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
    <value type="qlonglong" key="ProjectExplorer.Target.ActiveRunConfiguration">0</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
-    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv</value>
+    <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv_2</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
      <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">
       <value type="bool" key="ProjectExplorer.BuildStep.Enabled">true</value>
       <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Python.PysideBuildStep</value>
-      <value type="QString" key="Python.PySideProjectTool">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv/bin/pyside6-project</value>
-      <value type="QString" key="Python.PySideUic">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv/bin/pyside6-uic</value>
      </valuemap>
      <value type="qlonglong" key="ProjectExplorer.BuildStepList.StepsCount">1</value>
      <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Build</value>
@@ -123,10 +121,10 @@
     <valuelist type="QVariantList" key="ProjectExplorer.BuildConfiguration.CustomParsers"/>
     <value type="bool" key="ProjectExplorer.BuildConfiguration.ParseStandardOutput">false</value>
     <valuelist type="QVariantList" key="ProjectExplorer.BuildConfiguration.UserEnvironmentChanges"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Python 3.11.2 Virtual Environment</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Python 3.11.2 Virtual Environment2</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Python.PySideBuildConfiguration</value>
-    <value type="QString" key="python">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv/bin/python</value>
-    <value type="QString" key="venv">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv</value>
+    <value type="QString" key="python">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv_2/bin/python</value>
+    <value type="QString" key="venv">/home/michal/Documents/qt-projects/rtt_viewer/.qtcreator/Python_3_11_2venv_2</value>
    </valuemap>
    <value type="qlonglong" key="ProjectExplorer.Target.BuildConfigurationCount">1</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.DeployConfiguration.0">
