@@ -1,53 +1,50 @@
-# tree.py
-
-class Node:
-    def __init__(self, value):
-        self.value = value
-        self.children = []
-
-    def add_child(self, child_node):
-        self.children.append(child_node)
-
-    def __repr__(self):
-        return f"Node({self.value})"
-
 class Tree:
-    def __init__(self, root_value):
-        self.root = Node(root_value)
+    def __init__(self):
+        self.tree = {}
 
-    def add_node(self, parent_value, value):
-        parent_node = self._find_node(self.root, parent_value)
-        if parent_node:
-            new_node = Node(value)
-            parent_node.add_child(new_node)
-
-    def _find_node(self, node, value):
-        if node.value == value:
-            return node
-        for child in node.children:
-            found = self._find_node(child, value)
-            if found:
-                return found
-        return None
-
-    def print_tree(self, node=None, level=0):
-        if node is None:
-            node = self.root
-        print(" " * level * 2 + str(node.value))
-        for child in node.children:
-            self.print_tree(child, level + 1)
-
-    @staticmethod
-    def from_string(path_string):
-        tree = Tree("root")  # Korzeń drzewa to "root"
-        lines = path_string.strip().split("\n")  # Rozdzielamy tekst na linie
+    def add_path(self, path):
+        """
+        Dodaje ścieżkę do drzewa.
+        :param path: Ścieżka w formacie "folder1/folder2/file"
+        """
+        print(f"Przetwarzana ścieżka: '{path}'")  # Debugowanie
+        parts = path.split("/")
+        if parts[0] != "root":
+            raise ValueError("Ścieżka musi zaczynać się od 'root'")
         
-        for line in lines:
-            parts = line.split("/")  # Dzielimy ścieżki na części
-            current_path = "root"
-            
-            for part in parts[1:]:  # Pomijamy "root", zaczynamy od ścieżki
-                tree.add_node(current_path, part)  # Dodajemy węzeł dla każdej części
-                current_path = part  # Aktualizujemy bieżący węzeł
+        current_level = self.tree
+        for part in parts:
+            if part not in current_level:
+                current_level[part] = {}  # Tworzy nowy podfolder, jeśli nie istnieje
+            current_level = current_level[part]
 
-        return tree
+    def get_top_level_folders(self):
+        """
+        Zwraca listę folderów na najwyższym poziomie drzewa.
+        :return: Lista folderów (kluczy) na najwyższym poziomie.
+        """
+        root = self.tree.get("root",{})
+        return list(root.keys())
+
+    def get_folder_contents(self, folder_name):
+        """
+        Zwraca zawartość (podfoldery i pliki) danego folderu.
+        :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
+        :return: Lista podfolderów i plików w danym folderze.
+        """
+        folder = self.tree.get(folder_name, {})
+        return list(folder.keys())
+
+    def print_tree(self, current_level=None, indent=0):
+        """
+        Wypisuje całe drzewo w formie hierarchicznej.
+        :param current_level: Aktualny poziom drzewa (domyślnie korzeń).
+        :param indent: Liczba wcięć dla hierarchii.
+        """
+        if current_level is None:
+            current_level = self.tree
+
+        for key, value in current_level.items():
+            print(" " * indent + key)
+            if isinstance(value, dict):
+                self.print_tree(value, indent + 2)

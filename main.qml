@@ -1,72 +1,44 @@
 import QtQuick
-import QtQuick.Window
-import QtQuick.Controls 2.15
-import QtQuick.Dialogs
+import QtQuick.Controls
+import QtQuick.Layouts
 
 Window {
-    width: 640
-    height: 480
+    width: 800
+    height: 600
     visible: true
-    title: qsTr("RTT Viewer")
-    FileDialog {
-                id: fileDialog
-                title: "Save Response"
+    title: "RTT Viewer with Directory Tree"
 
-                onAccepted: {
-                    rttHandler.set_save_path(fileDialog.fileUrl.toString().replace("file://", ""))
+    Rectangle {
+        id: rectangle
+        x: 0
+        y: 0
+        width: 800
+        height: 600
+        color: "#6b5f5f"
+
+        Button {
+            id: dir_button
+            x: 73
+            y: 118
+            text: qsTr("Button")
+            onClicked: rttHandler.fill_combobox()
+        }
+
+        ComboBox {
+            id: dir_comboBox
+            x: 348
+            y: 120
+            model: []
+            Connections{
+                target: rttHandler
+                function onDataReady(data){
+                console.log("Received data for ComboBox:", data)
+
+                    dir_comboBox.model=data
                 }
+
+            }
+            }
+        }
     }
 
-            Rectangle {
-                id: background
-                x: 0
-                y: 0
-                width: 640
-                height: 480
-                color: "#e3e0e0"
-
-                Button {
-                    id: get_files_combobox
-                    x: 40
-                    y: 74
-                    text: qsTr("Button")
-                }
-
-                ComboBox {
-                    id: dir_comboBox
-                    x: 195
-                    y: 76
-                }
-            }
-
-    // ComboBox {
-    //     id: comboBox
-    //            x: 434
-    //            y: 44
-    //            width: 200
-    //            model: rttHandler.get_usb_devices()
-
-    //            // // Dostosowanie popup
-    //            // popup: Popup {
-    //            //     width: 300  // Szerokość rozwijanej listy
-    //            //     y: comboBox.height  // Pozycja Y poniżej ComboBox
-    //            //     parent: Overlay.overlay  // Ustaw rodzica na Overlay, aby mógł wystawać poza okno
-
-    //            //     contentItem: ListView {
-    //            //         implicitHeight: contentHeight
-    //            //         model: comboBox.popup.visible ? comboBox.delegateModel : null
-    //            //         currentIndex: comboBox.highlightedIndex
-
-    //            //         delegate: ItemDelegate {
-    //            //             width: comboBox.popup.width
-    //            //             text: modelData
-    //            //             highlighted: comboBox.highlightedIndex === index
-    //            //             onClicked: {
-    //            //                 comboBox.currentIndex = index
-    //            //                 comboBox.popup.close()
-    //            //             }
-    //            //         }
-    //            //     }
-    //            // }
-    // }
-}
