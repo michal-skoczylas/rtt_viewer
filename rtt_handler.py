@@ -62,6 +62,21 @@ class RTTHandler(QObject):
         else:
             print("Tree not initialized")
 
+    # Uzupełnaianie comboboxa plikami z wybranego folderu
+    @Slot(str,result=list)
+    def get_folder_contents(self,folder_name):
+        """
+    Zwraca zawartość (podfoldery i pliki) danego folderu.
+    :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
+    :return: Lista podfolderów i plików w danym folderze.
+    """ 
+        if self._tree:
+            contents = self._tree.get_folder_contents(folder_name)
+            print(f"Contens of selected folder: '{folder_name}:'",contents)
+            return contents
+        else:
+            print("tree not initialized")
+            return []
     # Pobieranie listy urządzeń USB
     @Slot(result=list)
     def get_usb_devices(self):

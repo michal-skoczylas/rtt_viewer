@@ -32,7 +32,8 @@ class Tree:
         :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
         :return: Lista podfolderów i plików w danym folderze.
         """
-        folder = self.tree.get(folder_name, {})
+        root = self.tree.get("root",{})
+        folder = root.get(folder_name, {})
         return list(folder.keys())
 
     def print_tree(self, current_level=None, indent=0):
