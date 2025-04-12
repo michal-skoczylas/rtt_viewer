@@ -11,7 +11,6 @@ class RTTHandler(QObject):
     # Sygnały
     dataReady = Signal(list)  # Emitowany, gdy dane są gotowe do uzupełnienia modelu
     received_data_changed = Signal()  # Emitowany, gdy odebrane dane się zmienią
-    
 
     def __init__(self):
         super().__init__()
@@ -63,27 +62,28 @@ class RTTHandler(QObject):
             print("Tree not initialized")
 
     # Uzupełnaianie comboboxa plikami z wybranego folderu
-    @Slot(str,result=list)
-    def get_folder_contents(self,folder_name):
+    @Slot(str, result=list)
+    def get_folder_contents(self, folder_name):
         """
-    Zwraca zawartość (podfoldery i pliki) danego folderu.
-    :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
-    :return: Lista podfolderów i plików w danym folderze.
-    """ 
+        Zwraca zawartość (podfoldery i pliki) danego folderu.
+        :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
+        :return: Lista podfolderów i plików w danym folderze.
+        """
         if self._tree:
             contents = self._tree.get_folder_contents(folder_name)
-            print(f"Contens of selected folder: '{folder_name}:'",contents)
+            print(f"Contens of selected folder: '{folder_name}:'", contents)
             return contents
         else:
             print("tree not initialized")
             return []
+
     # Pobieranie listy urządzeń USB
     @Slot(result=list)
     def get_usb_devices(self):
         context = pyudev.Context()
         devices = []
-        for device in context.list_devices(subsystem='usb', DEVTYPE='usb_device'):
-            device_name = device.get('ID_MODEL', 'Unknown')
+        for device in context.list_devices(subsystem="usb", DEVTYPE="usb_device"):
+            device_name = device.get("ID_MODEL", "Unknown")
             devices.append(device_name)
         return devices
 

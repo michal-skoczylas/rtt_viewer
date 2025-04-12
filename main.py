@@ -8,7 +8,8 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QObject
 
 # Import with alias to avoid name conflict
-from rtt_handler import RTTHandler 
+from rtt_handler import RTTHandler
+from file_handler import FileHandler
 
 if __name__ == "__main__":
     # Use QApplication instead of QGuiApplication for better compatibility
@@ -22,8 +23,11 @@ if __name__ == "__main__":
 
     # Create and register handler
     rtt_handler = RTTHandler()
-    engine.rootContext().setContextProperty("rttHandler", rtt_handler)
+    file_handler = FileHandler()
 
+    #Create instances in QML
+    engine.rootContext().setContextProperty("rttHandler", rtt_handler)
+    engine.rootContext().setContextProperty("fileHandler", file_handler)
     # Load QML
     qml_file = Path(__file__).resolve().parent / "main.qml"
     print(f"Loading QML from: {qml_file}")

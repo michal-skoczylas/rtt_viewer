@@ -11,7 +11,7 @@ class Tree:
         parts = path.split("/")
         if parts[0] != "root":
             raise ValueError("Ścieżka musi zaczynać się od 'root'")
-        
+
         current_level = self.tree
         for part in parts:
             if part not in current_level:
@@ -23,7 +23,7 @@ class Tree:
         Zwraca listę folderów na najwyższym poziomie drzewa.
         :return: Lista folderów (kluczy) na najwyższym poziomie.
         """
-        root = self.tree.get("root",{})
+        root = self.tree.get("root", {})
         return list(root.keys())
 
     def get_folder_contents(self, folder_name):
@@ -32,7 +32,7 @@ class Tree:
         :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
         :return: Lista podfolderów i plików w danym folderze.
         """
-        root = self.tree.get("root",{})
+        root = self.tree.get("root", {})
         folder = root.get(folder_name, {})
         return list(folder.keys())
 

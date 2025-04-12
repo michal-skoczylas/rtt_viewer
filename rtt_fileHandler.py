@@ -14,21 +14,21 @@ import pyudev
 
 class FileHandler(QObject):
     def __init__(self):
-        file_path = ''
+        file_path = ""
 
-    @Slot()    
+    @Slot()
     def select_save_path(self):
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getSaveFileName(
-            None,"Save rtt data","","Text Files (*.txt);;All Files (*)"
+            None, "Save rtt data", "", "Text Files (*.txt);;All Files (*)"
         )
         if file_path:
             print(f"Selected save path: {file_path}")
             self.save_rtt_data_to_file(file_path)
-        
-        def save_rtt_data_to_file(self,filepath):
+
+        def save_rtt_data_to_file(self, filepath):
             try:
-                with open(filepath,"w") as file:
+                with open(filepath, "w") as file:
                     file.write("\n".join(self._last_command_data))
                 print(f"data saved to: {filepath}")
             except Exception as e:

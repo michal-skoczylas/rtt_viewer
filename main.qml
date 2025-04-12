@@ -93,6 +93,12 @@ Window {
                     text: qsTr("Select Path")
                     highlighted: false
                     flat: false
+                    onClicked:{
+                        var path = fileHandler.select_save_path()
+                        if (path !==""){
+                            console.log("Selected save path: ", path)
+                        }
+                    }
                 }
 
                 ComboBox {
