@@ -110,5 +110,22 @@ Window {
 
             }
         }
+
+        Button {
+            id: save_button
+            x: 64
+            y: 521
+            text: qsTr("Button")
+            onClicked:{
+                        if (dir_comboBox.currentText !== "" && fileListView.currentIndex >=0){
+                            var selectedFile = fileListView.model[fileListView.currentIndex];
+                            console.log("Selected folder:",dir_comboBox.currentText);
+                            console.log("Selected file: ", selectedFile);
+                            rttHandler.process_selected_items(dir_comboBox.currentText, selectedFile);
+                        }else{
+                            console.log("No folder or file selected");
+                        }
+            }
+        }
     }
 }

@@ -76,6 +76,23 @@ class RTTHandler(QObject):
         else:
             print("tree not initialized")
             return []
+    @Slot(str, str)
+    def process_selected_items(self,folder_name,file_name):
+        """Przetwarza wybrane elementy z comboboxa i listview, docelowo wysyła komendę po RTT
+
+        Args:
+            folder_name (_type_): Nazwa wybranego folderu w comboboxie
+            file_name (_type_): Nazwa wybranego pliku
+
+        Returns:
+            _type_: _description_
+        """
+        if not folder_name or not file_name:
+            print("Folder or file not selected")
+            return
+        
+        full_path =  f"{folder_name}/{file_name}"
+        print(f"Processing selected item: {full_path}")
 
     # Pobieranie listy urządzeń USB
     @Slot(result=list)
