@@ -56,9 +56,6 @@ class RTTHandler(QObject):
             self._rtt_server_process = None
     def __del__(self):
         """Stops rtt server while closing app
-
-        Returns:
-            _type_: _description_
         """
         self.start_rtt_server()
     # Właściwość do wyświetlania odebranych danych
@@ -75,6 +72,9 @@ class RTTHandler(QObject):
     # Tworzenie drzewa na podstawie przykładowych danych
     @Slot()
     def create_tree_from_sample_data(self):
+        """
+        Tworzy drzewo na podstawie przykładowych danych.
+        """
         sample_data = """
         root/A
         root/A/A1
@@ -213,3 +213,61 @@ class RTTHandler(QObject):
                     self._tree.print_tree()
             except Exception as e:
                 print(f"Error: {e}")
+    #Connecting and disconnecting from RTT server
+    async def connect_to_rtt(self,host="localhost",port=19021):
+        """Podłącza się do serwera RTT.
+
+        Args:
+            host (str, optional): Nazwa hosta. Defaults to "localhost".
+            port (int, optional): Port serwera. Defaults to 19021.
+        """
+        try:
+            print(f"Connecting to {host}:{port}")
+            self._reader, self._writer = await telnetlib3.open_connection(host,port)
+            print("Connected to RTT")
+            asyncio.create_task(self._read_rtt_messages())
+        except Exception as e:
+            print(f"Error connecting to RTT: {e}")
+            self._reader = None
+            self._writer = None
+    #Disconnecting from RTT server
+    async def disconnect_from_rtt(self):
+        """Rozłącza się z serwerem RTT.
+        """
+        if self._writer:
+            self._writer.close()
+            await self._writer.wait_closed()
+            print("Disconnected from RTT")
+            self._reader = None
+            self._writer = None
+    #Odbieranie wiadomosci z serwera RTT
+    async def _read_rtt_messages(self):
+        """ Nasłuchuje wiadomości przychodzących z serwera RTT.
+        
+        """
+        try:
+            while True:
+                data = await self._reader.read(1024)
+                if data:
+                    print("Received RTT message:", data.strip())
+                    self.add_received_data(data.strip())
+                    await asyncio.sleep(0.1) #Male opoznienie do zmiany TODO
+                else:
+                    break
+        except Exception as e:
+            print(f"Error reading RTT messages: {e}")
+        finally:
+           print("Stopping RTT message reading") 
+    
+    @Slot(str)
+    def send_message(self, message):
+            """Wysyła wiadomość do serwera RTT."""
+            if self._writer:
+                try:
+                    self._writer.write(message + "\n")
+                    print(f"Sent: {message}")
+                    self.add_received_data(f"Sent: {message}")  # Dodaj wysłaną wiadomość do bufora
+                except Exception as e:
+                    print(f"Error sending message: {e}")
+            else:
+                print("RTT connection is not established.")

@@ -2,6 +2,9 @@
     "files": [
         "main.py",
         "main.qml",
-        "xd.qml"
+        "rtt_handler.py",
+        "file_handler.py",
+        "tree.py",
+
     ]
 }
