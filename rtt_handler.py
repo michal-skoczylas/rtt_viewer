@@ -5,6 +5,7 @@ import pyudev
 from PySide6.QtCore import QObject, Slot, Signal, Property, QStringListModel
 from PySide6.QtWidgets import QFileDialog
 import tree
+import subprocess
 
 
 class RTTHandler(QObject):
@@ -19,8 +20,47 @@ class RTTHandler(QObject):
         self._tree = tree.Tree()  # Inicjalizacja drzewa
         self._directories_model = QStringListModel()  # Model dla QML
         self._last_command_data = []  # Przechowywanie ostatnich danych
+        self._rtt_server_process = None
         self.create_tree_from_sample_data()
 
+    @Slot()
+    def start_rtt_server(self):
+        """Uruchamia rtt_server jako proces w tle.
+
+        Returns:
+            _type_: _description_
+        """
+        try:
+            #Uruchomienie serwera RTT
+            self._rtt_server_process = subprocess.Popen(
+                ["rtt_server"], #tu wstaw serwer
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            print("RTT server started ")
+        except FileNotFoundError:
+            print("Error: rtt_server executable not found")
+        except Exception as e:
+            print(f"Error while starting rtt_server: {e}")
+            
+    def stop_rtt_server(self):
+        """Zatrzymuje dzialajacy serwer RTT
+
+        Returns:
+            _type_: _description_
+        """
+        if self._rtt_server_process:
+            self._rtt_server_process.terminate()
+            self._rtt_server_process.wait()
+            print("RTT server stopped")
+            self._rtt_server_process = None
+    def __del__(self):
+        """Stops rtt server while closing app
+
+        Returns:
+            _type_: _description_
+        """
+        self.start_rtt_server()
     # Właściwość do wyświetlania odebranych danych
     @Property(str, notify=received_data_changed)
     def received_data(self):
