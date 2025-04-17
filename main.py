@@ -35,7 +35,8 @@ if __name__ == "__main__":
 
     if not engine.rootObjects():
         sys.exit(-1)
-
+#Połączenie z rtt
+    asyncio.create_task(rtt_handler.connect_to_rtt())
     # Start application
     with loop:
         sys.exit(loop.run_forever())
