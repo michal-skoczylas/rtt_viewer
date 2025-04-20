@@ -1,46 +1,25 @@
-import sys
 from PySide6.QtWidgets import QApplication
-from PySide6.QtQuick import QQuickView
-from PySide6.QtCore import QUrl, QObject, Signal, Property, Slot
+from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtCore import QObject, Slot
 
 class WindowManager(QObject):
     def __init__(self):
         super().__init__()
-        self._current_window = "selection"
+        self.engines = []  # Przechowujemy silniki aby okna nie były zamykane
+    
+    @Slot()
+    def load_main_screen(self):
+        engine = QQmlApplicationEngine()
+        engine.load("main.qml")
+        self.engines.append(engine)  # Przechowujemy referencję
 
-    # Sygnał zmiany okna
-    windowChanged = Signal(str)
-    
-    @Property(str, notify=windowChanged)
-    def currentWindow(self):
-        return self._current_window
-    
-    @currentWindow.setter
-    def currentWindow(self, value):
-        if self._current_window != value:
-            self._current_window = value
-            self.windowChanged.emit(value)
+# app = QApplication([])
 
-    # Metoda wywoływana po wyborze płytki
-    @Slot(str)
-    def boardSelected(self, board_name):
-        print(f"Wybrano płytkę: {board_name}")
-        self.currentWindow = "main"
+# manager = WindowManager()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    
-    # Menadżer okien
-    manager = WindowManager()
-    
-    # Główne okno QML
-    view = QQuickView()
-    view.setResizeMode(QQuickView.SizeRootObjectToView)
-    
-    # Rejestracja obiektu Python w QML
-    view.rootContext().setContextProperty("windowManager", manager)
-    view.setSource(QUrl.fromLocalFile("board_selector.qml"))
-    
-    view.setTitle("STM Board Selector")
-    view.show()
-    sys.exit(app.exec_())
+# # Pierwsze okno
+# first_engine = QQmlApplicationEngine()
+# first_engine.rootContext().setContextProperty("windowManager", manager)
+# first_engine.load("board_selector.qml")
+
+# app.exec()

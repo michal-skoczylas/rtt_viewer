@@ -107,6 +107,9 @@ Window {
                     color: "#d3d3d3"
                     radius: 8
                 }
+                onClicked:{
+                    windowManager.create_new_window()
+                }
             }
 
             ListModel {
