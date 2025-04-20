@@ -33,7 +33,7 @@ class RTTHandler(QObject):
         try:
             #Uruchomienie serwera RTT
             self._rtt_server_process = subprocess.Popen(
-                ["rtt_server"], #tu wstaw serwer
+                ["JLinkExe"], #tu wstaw serwer
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
