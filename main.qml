@@ -58,6 +58,8 @@ Window {
                         onDoubleClicked: {
                             console.log("Selected file:", modelData)
                             // Tutaj możesz obsłużyć wybranie pliku
+                            var message = rttHandler.construct_message(dir_comboBox.currentText, modelData)
+                            rttHandler.send_message(message)
                         }
                     }
                 }
