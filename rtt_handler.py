@@ -271,3 +271,84 @@ class RTTHandler(QObject):
                     print(f"Error sending message: {e}")
             else:
                 print("RTT connection is not established.")
+
+    #Konstrukcja wiadomosci bazujac na tym co jest wuybrane w combobie i podwojnie klinkiete
+    @Slot(str,str)
+    def construct_message(self,dir_name,file_name):
+        """Zwraca komende do wysłania po RTT na podstawie tego co jest wybrane w comboboxie
+
+        Args:
+            dir_name (str): Wybrany folder w comboboxie
+            file_name (str): Plik wybrany przez podwójne kliknięcie w ListView
+        """
+        message = f"cat {dir_name}/{file_name}"
+        print(f"Constructed message: {message}")
+        return message
+    #Send message via rtt
+    @Slot(str)
+    def send_rtt_message(self, message):
+        """Wysyła wiadomość do serwera RTT."""
+        if self._writer:
+            try:
+                self._writer.write(message + "\n")
+                print(f"Sent: {message}")
+                self.add_received_data(f"Sent: {message}")  # Dodaj wysłaną wiadomość do bufora
+            except Exception as e:
+                print(f"Error sending message: {e}")
+        else:
+            print("RTT connection is not established.")
+    
+   #Read cated file from rtt, using buffer  
+@Slot(str, int, str)
+def read_file(self, file_name, file_size, save_path):
+    """
+    Reads a file sent via RTT and appends it to a file on disk.
+
+    Args:
+        file_name (str): Name of the file being read.
+        file_size (int): Total size of the file in bytes.
+        save_path (str): Path to save the file on disk.
+    """
+    asyncio.create_task(self._read_file(file_name, file_size, save_path))
+
+async def _read_file(self, file_name, file_size, save_path):
+    """
+    Asynchronous task to read a file sent via RTT and save it incrementally.
+
+    Args:
+        file_name (str): Name of the file being read.
+        file_size (int): Total size of the file in bytes.
+        save_path (str): Path to save the file on disk.
+    """
+    if not self._writer:
+        print("RTT connection is not established.")
+        return
+
+    try:
+        # Send the command to read the file
+        command = f"cat {file_name}\n"
+        self._writer.write(command)
+        print(f"Sent command to read file: {file_name}")
+
+        # Open the file for appending
+        with open(save_path, "wb") as file:
+            bytes_received = 0
+
+            while bytes_received < file_size:
+                # Read data in chunks
+                data = await self._reader.read(1024)
+                if not data:
+                    break
+
+                # Write the received data to the file
+                file.write(data.encode("utf-8"))
+                bytes_received += len(data)
+
+                # Calculate and print progress
+                progress = (bytes_received / file_size) * 100
+                print(f"Progress: {progress:.2f}% ({bytes_received}/{file_size} bytes)")
+
+            print(f"File '{file_name}' successfully saved to '{save_path}'.")
+
+    except Exception as e:
+        print(f"Error reading file: {e}")
