@@ -311,11 +311,12 @@ def read_file(self, file_name, file_size, save_path):
     """
     asyncio.create_task(self._read_file(file_name, file_size, save_path))
 
-async def _read_file(self, file_name, file_size, save_path):
+async def _read_file(self, dir_name, file_name, file_size, save_path):
     """
     Asynchronous task to read a file sent via RTT and save it incrementally.
 
     Args:
+        dir_name (str): Name of the directory containing the file.
         file_name (str): Name of the file being read.
         file_size (int): Total size of the file in bytes.
         save_path (str): Path to save the file on disk.
@@ -325,10 +326,10 @@ async def _read_file(self, file_name, file_size, save_path):
         return
 
     try:
-        # Send the command to read the file
-        command = f"cat {file_name}\n"
-        self._writer.write(command)
-        print(f"Sent command to read file: {file_name}")
+        # Construct the command using the construct_message function
+        command = self.construct_message(dir_name, file_name)
+        self._writer.write(command + "\n")
+        print(f"Sent command to read file: {command}")
 
         # Open the file for appending
         with open(save_path, "wb") as file:
