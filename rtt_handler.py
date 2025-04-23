@@ -2,79 +2,156 @@
 import asyncio
 import telnetlib3
 import pyudev
+import subprocess
 from PySide6.QtCore import QObject, Slot, Signal, Property, QStringListModel
 from PySide6.QtWidgets import QFileDialog
 import tree
-import subprocess
-
 
 class RTTHandler(QObject):
-    # Sygnały
-    dataReady = Signal(list)  # Emitowany, gdy dane są gotowe do uzupełnienia modelu
-    received_data_changed = Signal()  # Emitowany, gdy odebrane dane się zmienią
+    dataReady = Signal(list)
+    received_data_changed = Signal()
+    connection_status_changed = Signal(bool)
+    usb_devices_changed = Signal(list)
 
     def __init__(self):
         super().__init__()
         self._received_data = []
+        self._reader = None
         self._writer = None
-        self._tree = tree.Tree()  # Inicjalizacja drzewa
-        self._directories_model = QStringListModel()  # Model dla QML
-        self._last_command_data = []  # Przechowywanie ostatnich danych
-        self._rtt_server_process = None
+        self._rtt_process = None
+        self._tree = tree.Tree()
+        self._directories_model = QStringListModel()
+        self._last_command_data = []
+        self._is_connecting = False
+        self._telnet_port = "19021"
+        self._usb_devices = []
+
+        # Initialize components
         self.create_tree_from_sample_data()
-
-    @Slot()
-    def start_rtt_server(self):
-        """Uruchamia rtt_server jako proces w tle.
-
-        Returns:
-            _type_: _description_
-        """
-        try:
-            #Uruchomienie serwera RTT
-            self._rtt_server_process = subprocess.Popen(
-                ["JLinkExe"], #tu wstaw serwer
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            print("RTT server started ")
-        except FileNotFoundError:
-            print("Error: rtt_server executable not found")
-        except Exception as e:
-            print(f"Error while starting rtt_server: {e}")
-            
-    def stop_rtt_server(self):
-        """Zatrzymuje dzialajacy serwer RTT
-
-        Returns:
-            _type_: _description_
-        """
-        if self._rtt_server_process:
-            self._rtt_server_process.terminate()
-            self._rtt_server_process.wait()
-            print("RTT server stopped")
-            self._rtt_server_process = None
-    def __del__(self):
-        """Stops rtt server while closing app
-        """
         self.start_rtt_server()
-    # Właściwość do wyświetlania odebranych danych
-    @Property(str, notify=received_data_changed)
-    def received_data(self):
-        return "\n".join(self._last_command_data)
 
-    # Dodawanie odebranych danych
+    def __del__(self):
+        self.stop_rtt_server()
+        if self._writer:
+            asyncio.create_task(self._close_connection())
+
+    # Server and connection management
+    def start_rtt_server(self):
+        """Starts RTT server in background"""
+        if self._rtt_process is not None:
+            print("⚠️ RTT server already running!")
+            return
+
+        print("🔄 Starting RTT server...")
+        try:
+            self._rtt_process = subprocess.Popen(
+                ["JLinkExe", "-RTTTelnetPort", self._telnet_port],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            print(f"✅ RTT server started (PID: {self._rtt_process.pid})")
+            asyncio.create_task(self._delayed_connect())
+        except Exception as e:
+            print(f"❌ Failed to start RTT server: {e}")
+
+    def stop_rtt_server(self):
+        """Stops RTT server"""
+        if self._rtt_process is None:
+            return
+
+        print("🛑 Stopping RTT server...")
+        try:
+            self._rtt_process.terminate()
+            self._rtt_process.wait()
+            print("✅ RTT server stopped")
+        except Exception as e:
+            print(f"❌ Error stopping RTT server: {e}")
+        finally:
+            self._rtt_process = None
+
+    async def _delayed_connect(self):
+        """Waits a bit before connecting to RTT"""
+        await asyncio.sleep(2)
+        await self.connect_to_rtt()
+
+    async def connect_to_rtt(self, host="localhost", port=None):
+        """Connects to RTT server"""
+        if self._is_connecting:
+            return
+
+        port = port or self._telnet_port
+        self._is_connecting = True
+
+        try:
+            print(f"🔌 Connecting to RTT at {host}:{port}...")
+            self._reader, self._writer = await telnetlib3.open_connection(host, port)
+            print("✅ Connected to RTT")
+            self.connection_status_changed.emit(True)
+            asyncio.create_task(self._read_rtt_messages())
+        except Exception as e:
+            print(f"❌ Connection error: {e}")
+            self.connection_status_changed.emit(False)
+        finally:
+            self._is_connecting = False
+
+    async def _close_connection(self):
+        """Closes RTT connection"""
+        if self._writer:
+            self._writer.close()
+            await self._writer.wait_closed()
+            self._reader = None
+            self._writer = None
+            self.connection_status_changed.emit(False)
+            print("✅ RTT connection closed")
+
+    async def _read_rtt_messages(self):
+        """Reads incoming RTT messages"""
+        try:
+            while True:
+                data = await self._reader.read(1024)
+                if data:
+                    print(f"📥 Received: {data.strip()}")
+                    self.add_received_data(data.strip())
+        except Exception as e:
+            print(f"❌ Read error: {e}")
+        finally:
+            await self._close_connection()
+
+    # Data handling
     def add_received_data(self, data):
+        """Adds received data to buffer"""
         self._received_data.append(data)
         self._last_command_data.append(data)
         self.received_data_changed.emit()
 
-    # Tworzenie drzewa na podstawie przykładowych danych
+    @Property(str, notify=received_data_changed)
+    def received_data(self):
+        return "\n".join(self._last_command_data)
+
+    # Command interface
+    @Slot(str)
+    def send_message(self, message):
+        """Sends message to RTT"""
+        if not self._writer:
+            print("❌ Not connected to RTT")
+            return
+
+        asyncio.create_task(self._async_send_message(message))
+
+    async def _async_send_message(self, message):
+        """Async message sender"""
+        try:
+            self._writer.write(message + "\n")
+            await self._writer.drain()
+            print(f"📤 Sent: {message}")
+        except Exception as e:
+            print(f"❌ Send error: {e}")
+
+    # Tree and file operations
     @Slot()
     def create_tree_from_sample_data(self):
-        """
-        Tworzy drzewo na podstawie przykładowych danych.
-        """
+        """Creates sample tree structure"""
         sample_data = """
         root/A
         root/A/A1
@@ -86,67 +163,70 @@ class RTTHandler(QObject):
         """
         self._tree = tree.Tree()
         for line in sample_data.strip().split("\n"):
-            line = line.strip()  # Usuń dodatkowe białe znaki
+            line = line.strip()
             self._tree.add_path(line)
-        print("Tree created from sample data:")
+        print("Sample tree created:")
         self._tree.print_tree()
 
-    # Uzupełnianie ComboBoxa folderami z pierwszego poziomu drzewa
     @Slot()
     def fill_combobox(self):
+        """Fills combobox with top-level directories"""
         if self._tree:
             first_level = self._tree.get_top_level_folders()
-            print("First-level directories:", first_level)  # Debugowanie
-            self.dataReady.emit(first_level)  # Emituj sygnał z listą folderów
+            print("First-level directories:", first_level)
+            self.dataReady.emit(first_level)
         else:
             print("Tree not initialized")
 
-    # Uzupełnaianie comboboxa plikami z wybranego folderu
     @Slot(str, result=list)
     def get_folder_contents(self, folder_name):
-        """
-        Zwraca zawartość (podfoldery i pliki) danego folderu.
-        :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
-        :return: Lista podfolderów i plików w danym folderze.
-        """
+        """Returns contents of specified folder"""
         if self._tree:
             contents = self._tree.get_folder_contents(folder_name)
-            print(f"Contens of selected folder: '{folder_name}:'", contents)
+            print(f"Contents of '{folder_name}':", contents)
             return contents
         else:
-            print("tree not initialized")
+            print("Tree not initialized")
             return []
+
     @Slot(str, str)
-    def process_selected_items(self,folder_name,file_name):
-        """Przetwarza wybrane elementy z comboboxa i listview, docelowo wysyła komendę po RTT
-
-        Args:
-            folder_name (_type_): Nazwa wybranego folderu w comboboxie
-            file_name (_type_): Nazwa wybranego pliku
-
-        Returns:
-            _type_: _description_
-        """
+    def process_selected_items(self, folder_name, file_name):
+        """Processes selected folder and file"""
         if not folder_name or not file_name:
             print("Folder or file not selected")
             return
         
-        full_path =  f"{folder_name}/{file_name}"
+        full_path = f"{folder_name}/{file_name}"
         print(f"Processing selected item: {full_path}")
+        self.send_message(f"cat {full_path}")
 
-    # Pobieranie listy urządzeń USB
+    @Slot(str, str)
+    def construct_message(self, dir_name, file_name):
+        """Constructs RTT command from UI selection"""
+        message = f"cat {dir_name}/{file_name}"
+        print(f"Constructed message: {message}")
+        return message
+
+    # USB device handling
     @Slot(result=list)
     def get_usb_devices(self):
+        """Returns list of connected USB devices"""
         context = pyudev.Context()
-        devices = []
-        for device in context.list_devices(subsystem="usb", DEVTYPE="usb_device"):
-            device_name = device.get("ID_MODEL", "Unknown")
-            devices.append(device_name)
-        return devices
+        self._usb_devices = []
+        try:
+            for device in context.list_devices(subsystem="usb", DEVTYPE="usb_device"):
+                device_name = device.get("ID_MODEL", "Unknown")
+                self._usb_devices.append(device_name)
+            self.usb_devices_changed.emit(self._usb_devices)
+            return self._usb_devices
+        except Exception as e:
+            print(f"Error getting USB devices: {e}")
+            return []
 
-    # Wybór ścieżki zapisu pliku
+    # File operations
     @Slot()
     def select_save_path(self):
+        """Opens file dialog to select save path"""
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getSaveFileName(
             None, "Save RTT Data", "", "Text Files (*.txt);;All Files (*)"
@@ -155,8 +235,8 @@ class RTTHandler(QObject):
             print(f"Selected save path: {file_path}")
             self.save_rtt_data_to_file(file_path)
 
-    # Zapis danych RTT do pliku
     def save_rtt_data_to_file(self, filepath):
+        """Saves RTT data to file"""
         try:
             with open(filepath, "w") as file:
                 file.write("\n".join(self._last_command_data))
@@ -164,192 +244,48 @@ class RTTHandler(QObject):
         except Exception as e:
             print(f"Error saving file: {e}")
 
-    # Odczyt danych RTT
-    @Slot()
-    def read_rtt(self):
-        asyncio.create_task(self._read_rtt())
+    @Slot(str, str, str)
+    def read_file(self, dir_name, file_name, save_path):
+        """Reads file from RTT and saves to disk"""
+        asyncio.create_task(self._read_file(dir_name, file_name, save_path))
 
-    async def _read_rtt(self):
-        host = "localhost"
-        port = 19021
-        print(f"Connecting to {host}:{port}")
+    async def _read_file(self, dir_name, file_name, save_path):
+        """Async file reading operation"""
+        if not self._writer:
+            print("Not connected to RTT")
+            return
 
         try:
-            reader, writer = await telnetlib3.open_connection(host, port)
-            self._writer = writer
-            print("Connected to RTT, waiting for data...")
+            command = f"cat {dir_name}/{file_name}"
+            self._writer.write(command + "\n")
+            await self._writer.drain()
 
-            while True:
-                data = await reader.read(1024)
-                if data:
-                    print("Received:", data.strip())
-                    self.add_received_data(data.strip())
-                await asyncio.sleep(0.1)
+            with open(save_path, "wb") as file:
+                while True:
+                    data = await self._reader.read(1024)
+                    if not data:
+                        break
+                    file.write(data.encode("utf-8"))
+                    print(f"Received {len(data)} bytes")
+
+            print(f"File saved to: {save_path}")
         except Exception as e:
-            print(f"Error: {e}")
-        finally:
-            if self._writer:
-                self._writer.close()
+            print(f"Error reading file: {e}")
 
-    # Wysłanie polecenia `file_list` do RTT
+    # Utility methods
     @Slot()
     def send_file_list_command(self):
-        if self._writer:
-            command = "file_list\n"
-            self._writer.write(command)
-            print(f"Sent command: {command.strip()}")
-            asyncio.create_task(self._read_file_list_response())
+        """Sends file_list command to RTT"""
+        self.send_message("file_list")
 
-    async def _read_file_list_response(self):
-        if self._writer:
-            try:
-                data = await self._writer.read(1024)
-                if data:
-                    print("Received file list:", data.strip())
-                    self.add_received_data(data.strip())
-                    self._tree = tree.Tree()
-                    for line in data.strip().split("\n"):
-                        self._tree.add_path(line)
-                    self._tree.print_tree()
-            except Exception as e:
-                print(f"Error: {e}")
-    #Connecting and disconnecting from RTT server
-    async def connect_to_rtt(self,host="localhost",port=19021):
-        """Podłącza się do serwera RTT.
+    @Slot()
+    def send_hello_message(self):
+        """Sends test message to RTT"""
+        self.send_message("hejka")
 
-        Args:
-            host (str, optional): Nazwa hosta. Defaults to "localhost".
-            port (int, optional): Port serwera. Defaults to 19021.
-        """
-        try:
-            print(f"Connecting to {host}:{port}")
-            self._reader, self._writer = await telnetlib3.open_connection(host,port)
-            print("Connected to RTT")
-            asyncio.create_task(self._read_rtt_messages())
-        except Exception as e:
-            print(f"Error connecting to RTT: {e}")
-            self._reader = None
-            self._writer = None
-    #Disconnecting from RTT server
-    async def disconnect_from_rtt(self):
-        """Rozłącza się z serwerem RTT.
-        """
-        if self._writer:
-            self._writer.close()
-            await self._writer.wait_closed()
-            print("Disconnected from RTT")
-            self._reader = None
-            self._writer = None
-    #Odbieranie wiadomosci z serwera RTT
-    async def _read_rtt_messages(self):
-        """ Nasłuchuje wiadomości przychodzących z serwera RTT.
-        
-        """
-        try:
-            while True:
-                data = await self._reader.read(1024)
-                if data:
-                    print("Received RTT message:", data.strip())
-                    self.add_received_data(data.strip())
-                    await asyncio.sleep(0.1) #Male opoznienie do zmiany TODO
-                else:
-                    break
-        except Exception as e:
-            print(f"Error reading RTT messages: {e}")
-        finally:
-           print("Stopping RTT message reading") 
-    
-    @Slot(str)
-    def send_message(self, message):
-            """Wysyła wiadomość do serwera RTT."""
-            if self._writer:
-                try:
-                    self._writer.write(message + "\n")
-                    print(f"Sent: {message}")
-                    self.add_received_data(f"Sent: {message}")  # Dodaj wysłaną wiadomość do bufora
-                except Exception as e:
-                    print(f"Error sending message: {e}")
-            else:
-                print("RTT connection is not established.")
-
-    #Konstrukcja wiadomosci bazujac na tym co jest wuybrane w combobie i podwojnie klinkiete
-    @Slot(str,str)
-    def construct_message(self,dir_name,file_name):
-        """Zwraca komende do wysłania po RTT na podstawie tego co jest wybrane w comboboxie
-
-        Args:
-            dir_name (str): Wybrany folder w comboboxie
-            file_name (str): Plik wybrany przez podwójne kliknięcie w ListView
-        """
-        message = f"cat {dir_name}/{file_name}"
-        print(f"Constructed message: {message}")
-        return message
-    #Send message via rtt
-    @Slot(str)
-    def send_rtt_message(self, message):
-        """Wysyła wiadomość do serwera RTT."""
-        if self._writer:
-            try:
-                self._writer.write(message + "\n")
-                print(f"Sent: {message}")
-                self.add_received_data(f"Sent: {message}")  # Dodaj wysłaną wiadomość do bufora
-            except Exception as e:
-                print(f"Error sending message: {e}")
-        else:
-            print("RTT connection is not established.")
-    
-   #Read cated file from rtt, using buffer  
-@Slot(str, int, str)
-def read_file(self, file_name, file_size, save_path):
-    """
-    Reads a file sent via RTT and appends it to a file on disk.
-
-    Args:
-        file_name (str): Name of the file being read.
-        file_size (int): Total size of the file in bytes.
-        save_path (str): Path to save the file on disk.
-    """
-    asyncio.create_task(self._read_file(file_name, file_size, save_path))
-
-async def _read_file(self, dir_name, file_name, file_size, save_path):
-    """
-    Asynchronous task to read a file sent via RTT and save it incrementally.
-
-    Args:
-        dir_name (str): Name of the directory containing the file.
-        file_name (str): Name of the file being read.
-        file_size (int): Total size of the file in bytes.
-        save_path (str): Path to save the file on disk.
-    """
-    if not self._writer:
-        print("RTT connection is not established.")
-        return
-
-    try:
-        # Construct the command using the construct_message function
-        command = self.construct_message(dir_name, file_name)
-        self._writer.write(command + "\n")
-        print(f"Sent command to read file: {command}")
-
-        # Open the file for appending
-        with open(save_path, "wb") as file:
-            bytes_received = 0
-
-            while bytes_received < file_size:
-                # Read data in chunks
-                data = await self._reader.read(1024)
-                if not data:
-                    break
-
-                # Write the received data to the file
-                file.write(data.encode("utf-8"))
-                bytes_received += len(data)
-
-                # Calculate and print progress
-                progress = (bytes_received / file_size) * 100
-                print(f"Progress: {progress:.2f}% ({bytes_received}/{file_size} bytes)")
-
-            print(f"File '{file_name}' successfully saved to '{save_path}'.")
-
-    except Exception as e:
-        print(f"Error reading file: {e}")
+    @Slot()
+    def clear_received_data(self):
+        """Clears received data buffer"""
+        self._last_command_data = []
+        self.received_data_changed.emit()
+        print("Received data cleared")

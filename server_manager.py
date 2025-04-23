@@ -1,20 +1,17 @@
 import subprocess
-import time
+import asyncio
+import telnetlib3
 
 class ServerManager:
-    def __init__(self, device="STM32F407VG", interface="SWD", speed="4000", telnet_port="19021"):
+    def __init__(self, telnet_port="19021"):
         """
         Inicjalizuje menedżera serwera RTT.
-        :param device: Nazwa urządzenia (np. STM32F407VG).
-        :param interface: Interfejs (np. SWD lub JTAG).
-        :param speed: Prędkość komunikacji (np. 4000 kHz).
         :param telnet_port: Port Telnet dla RTT.
         """
-        self.device = device
-        self.interface = interface
-        self.speed = speed
         self.telnet_port = telnet_port
         self.process = None
+        self._reader = None
+        self._writer = None
 
     def start_server(self):
         """Uruchamia serwer RTT jako proces w tle."""
@@ -27,10 +24,6 @@ class ServerManager:
             self.process = subprocess.Popen(
                 [
                     "JLinkExe",
-                    "-device", self.device,
-                    "-if", self.interface,
-                    "-speed", self.speed,
-                    "-autoconnect", "1",
                     "-RTTTelnetPort", self.telnet_port
                 ],
                 stdout=subprocess.PIPE,
@@ -66,3 +59,32 @@ class ServerManager:
             return True
         print("❌ Serwer RTT nie działa")
         return False
+
+    async def connect_to_rtt(self, host="localhost", port=None):
+        """
+        Podłącza się do serwera RTT.
+        """
+        if port is None:
+            port = self.telnet_port
+
+        try:
+            print(f"🔌 Łączenie z serwerem RTT na {host}:{port}...")
+            self._reader, self._writer = await telnetlib3.open_connection(host, port)
+            print("✅ Połączono z RTT")
+            asyncio.create_task(self._read_rtt_messages())
+        except Exception as e:
+            print(f"❌ Błąd podczas łączenia z RTT: {e}")
+            self._reader = None
+            self._writer = None
+
+    async def _read_rtt_messages(self):
+        """
+        Nasłuchuje wiadomości przychodzących z serwera RTT.
+        """
+        try:
+            while True:
+                data = await self._reader.read(1024)
+                if data:
+                    print(f"📥 Odebrano wiadomość RTT: {data.strip()}")
+        except Exception as e:
+            print(f"❌ Błąd podczas odczytu wiadomości RTT: {e}")

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 Window {
+    id: window
     width: 800
     height: 600
     visible: true
@@ -127,6 +128,17 @@ Window {
                         }else{
                             console.log("No folder or file selected");
                         }
+            }
+        }
+
+        Button {
+            id: rtt_conn_button
+            x: 597
+            y: 22
+            text: qsTr("connect to rtt")
+            onClicked: {
+                console.log("Sending 'hejka' message...");
+                rttHandler.send_hello_message();
             }
         }
     }

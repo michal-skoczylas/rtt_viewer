@@ -1,8 +1,7 @@
 import subprocess
 import time
-import sys
 
-class RTTStarter:
+class RTTServer:
     def __init__(self, port="19021"):
         self.port = port
         self.process = None
@@ -33,11 +32,11 @@ class RTTStarter:
             print("✅ Server stopped")
 
 if __name__ == "__main__":
-    starter = RTTStarter()
-    if starter.start():
+    server = RTTServer()
+    if server.start():
         try:
             print("Server running, press Ctrl+C to stop...")
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            starter.stop()
+            server.stop()
