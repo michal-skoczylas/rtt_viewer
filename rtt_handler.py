@@ -6,12 +6,19 @@ import subprocess
 from PySide6.QtCore import QObject, Slot, Signal, Property, QStringListModel
 from PySide6.QtWidgets import QFileDialog
 import tree
+import pylink
+import os
+from pylink.enums import JLinkInterfaces
 
 class RTTHandler(QObject):
     dataReady = Signal(list)
     received_data_changed = Signal()
     connection_status_changed = Signal(bool)
     usb_devices_changed = Signal(list)
+    CHIP_NAME="STM32F413ZH"
+    RTT_CHANNEL=0
+    jlink = pylink.JLink()
+
 
     def __init__(self):
         super().__init__()
@@ -115,58 +122,21 @@ class RTTHandler(QObject):
         if file_path:
             print(f"Selected save path: {file_path}")
             self.save_rtt_data_to_file(file_path)
-
-    def save_rtt_data_to_file(self, filepath):
-        """Saves RTT data to file"""
+    @Slot()
+    def board_setup(self,chip_name="STM32F413ZH",rtt_channel=0):
+        self.CHIP_NAME =chip_name
+        self.RTT_CHANNEL = rtt_channel
+    #Powinno wysylac komende poczekac na odpowiedz i na jej podstawie utworzyc drzewo, trzeba to jakos przemylsec
+    @Slot()
+    def send_file_list_message(self):
+        """Sends a super message to STM via rtt in order to receive file tree"""
+        self.jlink.open()
+        self.jlink.set_tif(JLinkInterfaces.SWD)
+        self.jlink.connect(self.CHIP_NAME)
+        self.jlink.rtt_start()
         try:
-            with open(filepath, "w") as file:
-                file.write("\n".join(self._last_command_data))
-            print(f"Data saved to: {filepath}")
-        except Exception as e:
-            print(f"Error saving file: {e}")
+            self.jlink.rtt_write('super') 
+            print("succeed sending super ")
+        except:
+            print("failed sending super")
 
-    @Slot(str, str, str)
-    def read_file(self, dir_name, file_name, save_path):
-        """Reads file from RTT and saves to disk"""
-        asyncio.create_task(self._read_file(dir_name, file_name, save_path))
-
-    async def _read_file(self, dir_name, file_name, save_path):
-        """Async file reading operation"""
-        if not self._writer:
-            print("Not connected to RTT")
-            return
-
-        try:
-            command = f"cat {dir_name}/{file_name}"
-            self._writer.write(command + "\n")
-            await self._writer.drain()
-
-            with open(save_path, "wb") as file:
-                while True:
-                    data = await self._reader.read(1024)
-                    if not data:
-                        break
-                    file.write(data.encode("utf-8"))
-                    print(f"Received {len(data)} bytes")
-
-            print(f"File saved to: {save_path}")
-        except Exception as e:
-            print(f"Error reading file: {e}")
-
-    # Utility methods
-    @Slot()
-    def send_file_list_command(self):
-        """Sends file_list command to RTT"""
-        self.send_message("file_list")
-
-    @Slot()
-    def send_hello_message(self):
-        """Sends test message to RTT"""
-        self.send_message("hejka")
-
-    @Slot()
-    def clear_received_data(self):
-        """Clears received data buffer"""
-        self._last_command_data = []
-        self.received_data_changed.emit()
-        print("Received data cleared")
