@@ -137,8 +137,7 @@ Window {
             y: 22
             text: qsTr("connect to rtt")
             onClicked: {
-                console.log("Sending 'hejka' message...");
-                rttHandler.send_hello_message();
+                rttHandler.send_file_list_message();
             }
         }
     }
