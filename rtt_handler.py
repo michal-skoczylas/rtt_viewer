@@ -2,6 +2,7 @@
 import asyncio
 import telnetlib3
 import pyudev
+import time
 import subprocess
 from PySide6.QtCore import QObject, Slot, Signal, Property, QStringListModel
 from PySide6.QtWidgets import QFileDialog
@@ -130,13 +131,27 @@ class RTTHandler(QObject):
     @Slot()
     def send_file_list_message(self):
         """Sends a super message to STM via rtt in order to receive file tree"""
-        self.jlink.open()
-        self.jlink.set_tif(JLinkInterfaces.SWD)
-        self.jlink.connect(self.CHIP_NAME)
-        self.jlink.rtt_start()
         try:
-            self.jlink.rtt_write('super') 
-            print("succeed sending super ")
-        except:
-            print("failed sending super")
+            self.jlink.open()
+            self.jlink.set_tif(JLinkInterfaces.SWD)
+            self.jlink.connect(self.CHIP_NAME)
+            self.jlink.rtt_start()
+            bytes_written = self.jlink.rtt_write(0, b'super') 
+            print(f"Successfully sent {bytes_written} bytes. Data: 'super'")
+            if bytes_written==0:
+                print("RTT buffer is full, retrying...")
+                time.sleep(0.01)
+                bytes_written = self.jlink.rtt_write(0, b'super') 
+                
+        except Exception as e:
+           # Szczegółowe logowanie błędu
+           print(f"Failed to send 'super' command. Error details:")
+           print(f"Exception type: {type(e).__name__}")
+           print(f"Error message: {str(e)}")
+
+           # Dodatkowe informacje debugowe
+           print("\nDebug info:")
+           print(f"Is JLink connected: {hasattr(self.jlink, 'connected') and self.jlink.connected}")
+           print(f"Chip name: {self.CHIP_NAME}")
+           print(f"Interface type: {JLinkInterfaces.SWD}")
 

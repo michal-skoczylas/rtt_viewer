@@ -135,7 +135,7 @@ Window {
             id: rtt_conn_button
             x: 597
             y: 22
-            text: qsTr("connect to rtt")
+            text: qsTr("super")
             onClicked: {
                 rttHandler.send_file_list_message();
             }
