@@ -142,6 +142,15 @@ class RTTHandler(QObject):
                 print("RTT buffer is full, retrying...")
                 time.sleep(0.01)
                 bytes_written = self.jlink.rtt_write(0, b'super') 
+            time.sleep(0.01)
+            data_received = self.jlink.rtt_read(0, 1024)
+            if data_received:
+                # Konwertuj listę liczb całkowitych na ciąg znaków
+                message = ''.join(chr(byte) for byte in data_received)
+                print(f"Received response: {message.strip()}")
+            else:
+                print("No data received")
+            
                 
         except Exception as e:
            # Szczegółowe logowanie błędu
