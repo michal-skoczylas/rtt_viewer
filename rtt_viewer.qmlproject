@@ -1,0 +1,9 @@
+importPaths: [
+    "imports"
+]
+
+files: [
+    "board_selector.qml",
+    "main.qml",
+    "other_file.qml"
+]

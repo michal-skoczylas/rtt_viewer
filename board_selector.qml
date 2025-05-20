@@ -1,4 +1,4 @@
-import QtQuick
+import QtQuick 2.15
 import QtQuick.Controls
 import QtQuick.Layouts
 
@@ -114,8 +114,8 @@ Window {
 
             ListModel {
                 id: stmBoards
-                ListElement { name: "STM123123" }
-                ListElement { name: "XDDD" }
+                ListElement { name: "STM32F413ZH" }
+                ListElement { name: "INNA" }
             }
         }
 
