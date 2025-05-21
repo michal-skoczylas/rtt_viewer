@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
@@ -9,9 +9,7 @@ Window {
     visible: true
     title: qsTr("Wybór płytki")
 
-    property string selectedBoard: ""  
-
-    Rectangle{
+    Rectangle {
         id: background_rect
         color: "#e1f3f3f3"
         anchors.fill: parent
@@ -20,54 +18,54 @@ Window {
             anchors.fill: parent
             spacing: 10
 
-            // ... search bar i inne elementy ...
-
+            // Lista płytek
             Rectangle {
-                id: background_rectangle
+                id: mainContainer
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                color: background_rect.color
+                color: "#f3f3f3"
+                radius: 10
+                border.color: "#dddddd"
+                border.width: 1
 
-                Rectangle {
-                    id: mainContainer
-                    anchors.centerIn: parent
-                    width: Math.min(parent.width * 0.9, 700)
-                    height: Math.min(parent.height * 0.9, 500)
-                    color: "#f3f3f3"
-                    radius: 10
-                    border.color: "#dddddd"
-                    border.width: 1
+                ListView {
+                    id: listView
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    model: stmBoards
+                    spacing: 5
 
-                    ListView {
-                        id: boardListView
-                        anchors.fill: parent
-                        anchors.margins: 10
-                        model: stmBoards
-                        spacing: 5
+                    delegate: Rectangle {
+                        width: parent.width
+                        height: 40
+                        radius: 5
+                        color: model.isSelected ? "#d3d3d3" : "#ffffff"  // Zmiana koloru po zaznaczeniu
 
-                        delegate: Rectangle {
-                            width: parent.width
-                            height: 40
-                            color: ListView.isCurrentItem ? "#b3e5fc" : "#ffffff"
-                            radius: 5
+                        Text {
+                            anchors.centerIn: parent
+                            text: model.name
+                        }
 
-                            Text {
-                                anchors.centerIn: parent
-                                text: model.name
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    boardListView.currentIndex = index
-                                    mainWindow.selectedBoard = model.name
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
+                            onClicked: {
+                                // Zaznacz element
+                                for (let i = 0; i < stmBoards.count; i++) {
+                                    stmBoards.setProperty(i, "isSelected", false);
                                 }
+                                stmBoards.setProperty(index, "isSelected", true);
+                            }
+                            onDoubleClicked: {
+                                // Wyślij sygnał po dwukrotnym kliknięciu
+                                boardHandler.select_board(model.name);
                             }
                         }
                     }
                 }
             }
 
+            // Przycisk wyboru
             Button {
                 id: select_button
                 Layout.alignment: Qt.AlignHCenter
@@ -80,22 +78,20 @@ Window {
                     radius: 8
                 }
                 onClicked: {
-                    if (mainWindow.selectedBoard !== "") {
-                        console.log("Wybrana płytka:", mainWindow.selectedBoard)
-                        // Możesz tu wywołać slot w Pythonie, np.:
-                        // boardSelector.select_board(mainWindow.selectedBoard)
-                        windowManager.create_new_window()
-                    } else {
-                        console.log("Nie wybrano płytki!")
+                    // Wyślij sygnał dla zaznaczonego elementu
+                    for (let i = 0; i < stmBoards.count; i++) {
+                        if (stmBoards.get(i).isSelected) {
+                            boardHandler.select_board(stmBoards.get(i).name);
+                            break;
+                        }
                     }
                 }
             }
 
             ListModel {
                 id: stmBoards
-                ListElement { name: "STM32F413ZH" }
-                ListElement { name: "INNA" }
-                ListElement { name: "STM32F103C8" }
+                ListElement { name: "STM123123"; isSelected: false }
+                ListElement { name: "XDDD"; isSelected: false }
             }
         }
     }

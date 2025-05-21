@@ -85,7 +85,7 @@ class ApplicationManager:
 
     def show_main_window(self):
         """Show main window"""
-        qml_file = Path(__file__).resolve().parent /"board_selector.qml"
+        qml_file = Path(__file__).resolve().parent /"main.qml"
         print(f"Loading board selector QML from: {qml_file}")
         self.engine.load(QUrl.fromLocalFile(str(qml_file)))
         if not self.engine.rootObjects():
@@ -93,6 +93,7 @@ class ApplicationManager:
         
         self.main_window= self.engine.rootObjects()[0]
         self.main_window.show()
+        self.main_window.raise_()
     def on_board_selected(self,board_name):
         """Handle board selection and switch to the main window"""
         print(f"Board selected: {board_name}")
