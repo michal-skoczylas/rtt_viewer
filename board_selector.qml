@@ -7,56 +7,21 @@ Window {
     width: 800
     height: 600
     visible: true
-    title: qsTr("Wybór płytki")  // Poprawione qstr na qsTr
+    title: qsTr("Wybór płytki")
+
+    property string selectedBoard: ""  
+
     Rectangle{
         id: background_rect
         color: "#e1f3f3f3"
         anchors.fill: parent
 
-        // Główny layout - ColumnLayout jest lepszy niż zwykły Column
         ColumnLayout {
             anchors.fill: parent
-            spacing: 10  // Zmniejszony spacing z 100
+            spacing: 10
 
-            // Pasek wyszukiwania (przeniesiony na górę)
-            Rectangle {
-                id: search_bar_rect
-                color: background_rect.color
-                Layout.fillWidth: true
-                Layout.preferredHeight: 50
+            // ... search bar i inne elementy ...
 
-                TextField {
-                    id: searchField
-                    width: 792
-                    height: 40
-                    anchors.verticalCenter: parent.verticalCenter
-                    placeholderText: "Szukaj płytki..."
-                    font.pixelSize: 14
-                    anchors.horizontalCenter: parent.horizontalCenter
-
-                    background: Rectangle {
-                        id: reeec
-                        color: "#e3e0e0"
-                        implicitWidth: 200
-                        implicitHeight: 40
-                        border.color: {
-                            if (!searchField.enabled) return "#cccccc"
-                            return searchField.activeFocus ? "#0066cc" : "#aaaaaa"
-                        }
-                        border.width: searchField.activeFocus ? 2 : 1
-                        radius: 8
-                    }
-
-                    // Styl placeholder tekstu
-                    placeholderTextColor: "#888888"
-
-                    // Kolor zaznaczonego tekstu
-                    selectionColor: "#0066cc80"  // Niebieski z przezroczystością
-
-                }
-            }
-
-            // Główny kontener
             Rectangle {
                 id: background_rectangle
                 Layout.fillWidth: true
@@ -68,13 +33,13 @@ Window {
                     anchors.centerIn: parent
                     width: Math.min(parent.width * 0.9, 700)
                     height: Math.min(parent.height * 0.9, 500)
-                    color: "#f3f3f3"  // Poprawiony kolor (usunięto 'e1' przed hex)
+                    color: "#f3f3f3"
                     radius: 10
                     border.color: "#dddddd"
                     border.width: 1
 
-                    // Model powinien być zdefiniowany na poziomie Window/Item
                     ListView {
+                        id: boardListView
                         anchors.fill: parent
                         anchors.margins: 10
                         model: stmBoards
@@ -83,19 +48,26 @@ Window {
                         delegate: Rectangle {
                             width: parent.width
                             height: 40
-                            color: "#ffffff"
+                            color: ListView.isCurrentItem ? "#b3e5fc" : "#ffffff"
                             radius: 5
 
                             Text {
                                 anchors.centerIn: parent
                                 text: model.name
                             }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    boardListView.currentIndex = index
+                                    mainWindow.selectedBoard = model.name
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // Przycisk wyboru (na dole)
             Button {
                 id: select_button
                 Layout.alignment: Qt.AlignHCenter
@@ -107,8 +79,15 @@ Window {
                     color: "#d3d3d3"
                     radius: 8
                 }
-                onClicked:{
-                    windowManager.create_new_window()
+                onClicked: {
+                    if (mainWindow.selectedBoard !== "") {
+                        console.log("Wybrana płytka:", mainWindow.selectedBoard)
+                        // Możesz tu wywołać slot w Pythonie, np.:
+                        // boardSelector.select_board(mainWindow.selectedBoard)
+                        windowManager.create_new_window()
+                    } else {
+                        console.log("Nie wybrano płytki!")
+                    }
                 }
             }
 
@@ -116,11 +95,8 @@ Window {
                 id: stmBoards
                 ListElement { name: "STM32F413ZH" }
                 ListElement { name: "INNA" }
+                ListElement { name: "STM32F103C8" }
             }
         }
-
-        // Model powinien być zdefiniowany tutaj, a nie wewnątrz Rectangle
     }
-
 }
-
