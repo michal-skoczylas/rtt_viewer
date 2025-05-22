@@ -11,39 +11,6 @@ from PySide6.QtCore import QUrl
 from rtt_handler import RTTHandler
 from file_handler import FileHandler
 from board_handler import BoardHandler
-# async def main():
-#     # Use QApplication instead of QGuiApplication for better compatibility
-#     app = QApplication(sys.argv)
-
-#     # Set up async loop
-#     loop = qasync.QEventLoop(app)
-#     asyncio.set_event_loop(loop)
-
-#     engine = QQmlApplicationEngine()
-
-#     # Create and register handler
-#     rtt_handler = RTTHandler()
-#     file_handler = FileHandler()
-#     board_handler = BoardHandler()
-
-
-#     # Create instances in QML
-#     engine.rootContext().setContextProperty("rttHandler", rtt_handler)
-#     engine.rootContext().setContextProperty("fileHandler", file_handler)
-#     engine.rootContext().setContextProperty("boardHandler",board_handler)
-
-#     # Load QML
-#     qml_file = Path(__file__).resolve().parent / "main.qml"
-#     print(f"Loading QML from: {qml_file}")
-#     engine.load(qml_file)
-
-#     if not engine.rootObjects():
-#         sys.exit(-1)
-
-
-#     # Start application
-#     with loop:
-#         sys.exit(app.exec())
 
 class ApplicationManager:
     def __init__(self):
@@ -65,6 +32,29 @@ class ApplicationManager:
         
         #handle board selection
         self.board_handler.boardSelected.connect(self.on_board_selected)
+
+        #Loading windows
+        self.board_selector_window = None
+        self.main_window = None
+        #load board selector
+        qml_file_selector = Path(__file__).resolve().parent /"board_selector.qml"
+        self.engine.load(QUrl.fromLocalFile(str(qml_file_selector)))
+        if not self.engine.rootObjects():
+            sys.exit(-1)
+        self.board_selector_window = self.engine.rootObjects()[0]
+        #load main window without showing it
+        qml_file_main = Path(__file__).resolve().parent /"main.qml"
+        self.engine.load(QUrl.fromLocalFile(str(qml_file_main)))
+        if len(self.engine.rootObjects())<2:
+            print("Error loading main window") 
+            sys.exit(-1)
+        self.main_window = self.engine.rootObjects()[1]
+        self.main_window.hide()
+
+        #connect signals
+        self.board_handler.boardSelected.connect(self.on_board_selected)
+
+        
     
     def start(self):
         """Start app by showing board selector window"""
@@ -73,31 +63,15 @@ class ApplicationManager:
             sys.exit(self.app.exec())
     
     def show_board_selector(self):
-        """Show board selector window"""
-        qml_file = Path(__file__).resolve().parent /"board_selector.qml"
-        print(f"Loading board selector QML from: {qml_file}")
-        self.engine.load(QUrl.fromLocalFile(str(qml_file)))
-
-        if not self.engine.rootObjects():
-            sys.exit(-1)
-        self.board_selector_window = self.engine.rootObjects()[0]
         self.board_selector_window.show()
 
     def show_main_window(self):
-        """Show main window"""
-        qml_file = Path(__file__).resolve().parent /"main.qml"
-        print(f"Loading board selector QML from: {qml_file}")
-        self.engine.load(QUrl.fromLocalFile(str(qml_file)))
-        if not self.engine.rootObjects():
-            sys.exit(-1)
-        
-        self.main_window= self.engine.rootObjects()[0]
         self.main_window.show()
-        self.main_window.raise_()
+
     def on_board_selected(self,board_name):
         """Handle board selection and switch to the main window"""
         print(f"Board selected: {board_name}")
-        self.board_selector_window.close()
+        self.board_selector_window.hide()
         self.show_main_window()
 async def main():
     manager = ApplicationManager()

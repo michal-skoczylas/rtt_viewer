@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Controls 2.15
 import QtQuick.Layouts
-
+import QtQuick.Controls.Fusion
 Window {
     id: mainWindow
     width: 800
