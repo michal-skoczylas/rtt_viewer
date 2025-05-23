@@ -15,6 +15,7 @@ class RTTHandler(QObject):
     dataReady = Signal(list)
     received_data_changed = Signal()
     connection_status_changed = Signal(bool)
+    progressChanged = Signal(float)
     usb_devices_changed = Signal(list)
     CHIP_NAME="STM32F413ZH"
     RTT_CHANNEL=0
@@ -40,20 +41,18 @@ class RTTHandler(QObject):
     # Tree and file operations
     @Slot()
     def create_tree_from_sample_data(self):
-        """Creates sample tree structure"""
+        """Creates sample tree structure with file sizes"""
         sample_data = """
-        root/A
-        root/A/A1
-        root/A/A2
-        root/B
-        root/B/B1
-        root/B/B2
-        root/C
+        /A/file1.txt/1234
+        /A/file2.txt/5678
+        B/file3.bin/100
+        /C/file4.log/42
         """
         self._tree = tree.Tree()
         for line in sample_data.strip().split("\n"):
             line = line.strip()
-            self._tree.add_path(line)
+            if line:
+                self._tree.add_path(line)
         print("Sample tree created:")
         self._tree.print_tree()
 
@@ -127,6 +126,24 @@ class RTTHandler(QObject):
     def board_setup(self,chip_name="STM32F413ZH",rtt_channel=0):
         self.CHIP_NAME =chip_name
         self.RTT_CHANNEL = rtt_channel
+    @Slot(str,str,str)
+    def download_file(self,folder_name,file_name,save_path):
+        """Pobiera plik z płytki po RTT
+
+        Args:
+            folder_name (string): Folder w którym znajduje sie plik np. "A/B"
+            file_name (string): Nazwa pliku  
+            save_path (string): Ścieżka na dysku gdzie plik  ma być zapisany
+        """
+        #Build full path for file from tree
+        full_path = f"{folder_name}/{file_name}" if folder_name else file_name
+        file_size = self._tree.get_file_size(full_path)
+        if not file_size:
+            print("Cant find file size")
+            self.progressChanged.emit(0)
+            return
+        print(f"Downloading file {full_path} ({file_size} bytes to {save_path})")
+        #Send command to board via rtt
     #Powinno wysylac komende poczekac na odpowiedz i na jej podstawie utworzyc drzewo, trzeba to jakos przemylsec
     @Slot()
     def send_file_list_message(self):

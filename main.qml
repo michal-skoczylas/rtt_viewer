@@ -11,16 +11,12 @@ Window {
 
     Rectangle {
         id: background
-        x: 0
-        y: 0
-        width: 800
-        height: 600
-        color: "#e1f3f3f3"
+        anchors.fill: parent
+        color: "#f3f3f3" // jasne tło
 
         Connections {
             target: rttHandler
             function onDataReady(data) {
-                console.log("Received data for ComboBox:", data)
                 dir_comboBox.model = data
             }
         }
@@ -31,7 +27,7 @@ Window {
             y: 79
             width: 355
             height: 414
-            color: "#c0bfbc"
+            color: "#e0e0e0"
             radius: 10
 
             ListView {
@@ -45,8 +41,8 @@ Window {
                     Rectangle {
                         width: parent.width
                         height: parent.height
-                        color: "lightgray"
-                        border.color: "black"
+                        color: "#f9f9f9"
+                        border.color: "#b0b0b0"
 
                         Text {
                             anchors.centerIn: parent
@@ -58,7 +54,6 @@ Window {
                     MouseArea {
                         anchors.fill: parent
                         onDoubleClicked: {
-                            console.log("Selected file:", modelData)
                             var message = rttHandler.construct_message(dir_comboBox.currentText, modelData)
                             rttHandler.send_message(message)
                         }
@@ -73,27 +68,17 @@ Window {
             y: 79
             width: 232
             height: 200
-            color: "#c0bfbc"
+            color: "#e0e0e0"
             radius: 10
 
             Flow {
-                id: _flow
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                anchors.topMargin: 10
+                anchors.margins: 10
                 spacing: 10
 
                 Button {
                     id: dir_button
                     text: qsTr("Load Directories")
-                    contentItem: Text {
-                        text: parent.text
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font: parent.font
-                    }
                     onClicked: rttHandler.fill_combobox()
                 }
 
@@ -101,16 +86,7 @@ Window {
                     id: savePath_button
                     width: 85
                     text: qsTr("Select Path")
-                    highlighted: false
-                    flat: false
-                    contentItem: Text {
-                        text: parent.text
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        font: parent.font
-                    }
-                    onClicked:{
+                    onClicked: {
                         var path = fileHandler.select_save_path()
                         if (path !==""){
                             console.log("Selected save path: ", path)
@@ -123,12 +99,6 @@ Window {
                     width: 216
                     height: 24
                     model: []
-                    contentItem: Text {
-                        text: parent.displayText
-                        color: "black"
-                        verticalAlignment: Text.AlignVCenter
-                        font: parent.font
-                    }
                 }
             }
         }
@@ -138,18 +108,9 @@ Window {
             x: 64
             y: 521
             text: qsTr("Button")
-            contentItem: Text {
-                text: parent.text
-                color: "black"
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font: parent.font
-            }
             onClicked:{
                 if (dir_comboBox.currentText !== "" && fileListView.currentIndex >=0){
                     var selectedFile = fileListView.model[fileListView.currentIndex];
-                    console.log("Selected folder:",dir_comboBox.currentText);
-                    console.log("Selected file: ", selectedFile);
                     rttHandler.process_selected_items(dir_comboBox.currentText, selectedFile);
                 }else{
                     console.log("No folder or file selected");
@@ -162,16 +123,46 @@ Window {
             x: 597
             y: 22
             text: qsTr("super")
-            contentItem: Text {
-                text: parent.text
-                color: "black"
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font: parent.font
-            }
             onClicked: {
                 rttHandler.send_file_list_message();
             }
         }
+
+        Button {
+            id: select_board_button
+            x: 64
+            y: 566
+            text: qsTr("Select board")
+            onClicked: {
+                appManager.show_board_selector_from_main()
+            }
+        }
+                // ...przyciski...
+        
+               ProgressBar {
+            id: fileProgressBar
+            width: 400
+            height: 24
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 20
+            from: 0
+            to: 1
+            value: 0
+            visible: value > 0 && value < 1
+        
+            contentItem: Rectangle {
+                anchors.fill: parent
+                color: "#e0e0e0" // tło paska
+                radius: 12
+        
+                Rectangle {
+                    width: parent.width * fileProgressBar.position
+                    height: parent.height
+                    color: "limegreen" // kolor wypełnienia
+                    radius: 12
+                }
+            }
+        } 
     }
 }

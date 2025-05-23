@@ -3,28 +3,34 @@ class Tree:
         self.tree = {}
 
     def add_path(self, path):
-        """
-        Dodaje ścieżkę do drzewa.
-        :param path: Ścieżka w formacie "folder1/folder2/file"
-        """
-        print(f"Przetwarzana ścieżka: '{path}'")  # Debugowanie
-        parts = path.split("/")
-        if parts[0] != "root":
-            raise ValueError("Ścieżka musi zaczynać się od 'root'")
+            """
+            Dodaje ścieżkę do drzewa.
+            :param path: Ścieżka w formacie "/folder1/folder2/nazwa_pliku/rozmiar"
+            """
+            print(f"Przetwarzana ścieżka: '{path}'")
+            parts = path.strip("/").split("/")
+            if len(parts) < 2:
+                raise ValueError("Ścieżka musi zawierać co najmniej plik i rozmiar")
 
-        current_level = self.tree
-        for part in parts:
-            if part not in current_level:
-                current_level[part] = {}  # Tworzy nowy podfolder, jeśli nie istnieje
-            current_level = current_level[part]
+            *folders, file_name, size_str = parts
+            try:
+                size = int(size_str)
+            except ValueError:
+                raise ValueError(f"Nieprawidłowy rozmiar pliku: {size_str}")
+
+            current_level = self.tree
+            for folder in folders:
+                if folder not in current_level or not isinstance(current_level[folder], dict):
+                    current_level[folder] = {}
+                current_level = current_level[folder]
+            current_level[file_name] = size  # Plik jako klucz, rozmiar jako wartość
 
     def get_top_level_folders(self):
         """
         Zwraca listę folderów na najwyższym poziomie drzewa.
         :return: Lista folderów (kluczy) na najwyższym poziomie.
         """
-        root = self.tree.get("root", {})
-        return list(root.keys())
+        return list(self.tree.keys())
 
     def get_folder_contents(self, folder_name):
         """
@@ -32,8 +38,7 @@ class Tree:
         :param folder_name: Nazwa folderu, którego zawartość chcemy uzyskać.
         :return: Lista podfolderów i plików w danym folderze.
         """
-        root = self.tree.get("root", {})
-        folder = root.get(folder_name, {})
+        folder = self.tree.get(folder_name, {})
         return list(folder.keys())
 
     def print_tree(self, current_level=None, indent=0):

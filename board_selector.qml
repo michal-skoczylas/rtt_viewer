@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls 2.15
 import QtQuick.Layouts
-import QtQuick.Controls.Fusion
+// import QtQuick.Controls.Fusion
 Window {
     id: mainWindow
     width: 800
@@ -73,10 +73,7 @@ Window {
                 Layout.preferredHeight: 50
                 text: qsTr("Wybierz płytkę")
 
-                background: Rectangle {
-                    color: "#d3d3d3"
-                    radius: 8
-                }
+                
                 onClicked: {
                     // Wyślij sygnał dla zaznaczonego elementu
                     for (let i = 0; i < stmBoards.count; i++) {
