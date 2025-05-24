@@ -1,7 +1,8 @@
-from PySide6.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Slot,Signal
 from PySide6.QtWidgets import QFileDialog
 
 class FileHandler(QObject):
+    savePathSelected = Signal(str)
     def __init__(self):
         super().__init__()
         self._save_path = ""
@@ -19,6 +20,7 @@ class FileHandler(QObject):
         if file_path:
             self._save_path = file_path
             print(f"Selected save path: {file_path}")
+            self.savePathSelected.emit(file_path)
         else:
             print("No path selected")
         return self._save_path

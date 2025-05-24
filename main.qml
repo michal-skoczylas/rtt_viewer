@@ -26,6 +26,15 @@ Window {
                 fileProgressBar.value = value
             }
         }
+                property string selectedSavePath: ""
+        
+        Connections {
+            target: fileHandler
+            function onSavePathSelected(path) {
+                selectedSavePath = path
+                console.log("Wybrana ścieżka do zapisu:", path)
+            }
+        }
 
         Rectangle {
             id: listView_background
@@ -60,8 +69,15 @@ Window {
                     MouseArea {
                         anchors.fill: parent
                         onDoubleClicked: {
-                            var message = rttHandler.construct_message(dir_comboBox.currentText, modelData)
-                            rttHandler.send_message(message)
+                         if (
+            dir_comboBox.currentText !== "" &&
+            modelData !== "" &&
+            selectedSavePath !== ""
+        ) {
+            rttHandler.download_file(dir_comboBox.currentText, modelData, selectedSavePath)
+        } else {
+            console.log("No folder, file or save path selected");
+        }
                         }
                     }
                 }
@@ -115,9 +131,9 @@ Window {
             y: 521
             text: qsTr("Button")
             onClicked:{
-                if (dir_comboBox.currentText !== "" && fileListView.currentIndex >=0){
+                if (dir_comboBox.currentText !== "" && fileListView.currentIndex >= 0 && selectedSavePath !== "") {
                     var selectedFile = fileListView.model[fileListView.currentIndex];
-                    rttHandler.process_selected_items(dir_comboBox.currentText, selectedFile);
+                    rttHandler.download_file(dir_comboBox.currentText, selectedFile, selectedSavePath)
                 }else{
                     console.log("No folder or file selected");
                 }
