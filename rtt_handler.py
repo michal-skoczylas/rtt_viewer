@@ -144,7 +144,47 @@ class RTTHandler(QObject):
             return
         print(f"Downloading file {full_path} ({file_size} bytes to {save_path})")
         #Send command to board via rtt
+        self.send_message(f"cat {full_path}")
+        #Open file to save in chunks
+        received = 0
+        chunk_size = 1024
+        with open(save_path,"wb") as f:
+            while received <file_size:
+                chunk = self.jlink.rtt_read(self.RTT_CHANNEL,chunk_size)
+                if not chunk:
+                    time.sleep(0.01)
+                    continue
+                f.write(bytearray(chunk))
+                received +=len(chunk)
+                progress = min(received/file_size,1.0)
+                self.progressChanged.emit(progress)
+        self.progressChanged.emit(1.0)
+        print("Plik pobrany")
     #Powinno wysylac komende poczekac na odpowiedz i na jej podstawie utworzyc drzewo, trzeba to jakos przemylsec
+    def send_message(self,message:str):
+        """Sends message via rtt
+
+        Args:
+            message (str): Message to send 
+        """
+        if not hasattr(self,"jlink") or not self.jlinka().connected():
+            print("Jlink not connected cannot send message")
+            return
+        #Check if message is bytes
+        if isinstance(message,str):
+           message_bytes = message.encode("utf-8") 
+        else:
+            message_bytes=message
+        try:
+            bytes_written=self.jlink.rtt_write(self.RTT_CHANNEL,message_bytes)
+            print(f"Sent {bytes_written} bytes via RTT: {message.strip()}")
+            if bytes_written==0:
+                print("RTT buffer full, retrying...")
+                time.sleep(0.01)
+                bytes_written=self.jlink.rtt_write(self.RTT_CHANNEL,message_bytes)
+        except Exception as e:
+            print(f"Error sending message via RTT: {e}")
+
     @Slot()
     def send_file_list_message(self):
         """Sends a super message to STM via rtt in order to receive file tree"""
