@@ -20,6 +20,12 @@ Window {
                 dir_comboBox.model = data
             }
         }
+        Connections{
+            target: rttHandler
+            function onProgressChanged(value){
+                fileProgressBar.value = value
+            }
+        }
 
         Rectangle {
             id: listView_background

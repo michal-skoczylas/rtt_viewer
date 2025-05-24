@@ -54,3 +54,21 @@ class Tree:
             print(" " * indent + key)
             if isinstance(value, dict):
                 self.print_tree(value, indent + 2)
+    def get_file_size(self, full_path):
+        """
+        Zwraca rozmiar pliku na podstawie pełnej ścieżki, np. "A/B/file1.txt".
+        Jeśli plik nie istnieje, zwraca None.
+        """
+        parts = full_path.strip("/").split("/")
+        current_level = self.tree
+        for i, part in enumerate(parts):
+            if part not in current_level:
+                return None
+            if i == len(parts) - 1:
+                value = current_level[part]
+                if isinstance(value, int):
+                    return value
+                else:
+                    return None
+            current_level = current_level[part]
+        return None
