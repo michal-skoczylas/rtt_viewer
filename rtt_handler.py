@@ -19,7 +19,7 @@ class RTTHandler(QObject):
     usb_devices_changed = Signal(list)
     CHIP_NAME="STM32F413ZH"
     RTT_CHANNEL=0
-    jlink = pylink.JLink()
+    # jlink = pylink.JLink()
 
 
     def __init__(self):
@@ -34,6 +34,8 @@ class RTTHandler(QObject):
         self._is_connecting = False
         self._telnet_port = "19021"
         self._usb_devices = []
+        self.jlink = pylink.JLink()
+        self.file_path = None  # To store the selected file path for saving
 
         # Initialize components
         self.create_tree_from_sample_data()
@@ -114,14 +116,14 @@ class RTTHandler(QObject):
     # File operations
     @Slot()
     def select_save_path(self):
-        """Opens file dialog to select save path"""
+        """Opens file dialog to select save path and stores it in self.file_path"""
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getSaveFileName(
             None, "Save RTT Data", "", "Text Files (*.txt);;All Files (*)"
         )
         if file_path:
             print(f"Selected save path: {file_path}")
-            self.save_rtt_data_to_file(file_path)
+            self.file_path = file_path  # Store the selected path for later use
     @Slot()
     def board_setup(self,chip_name="STM32F413ZH",rtt_channel=0):
         self.CHIP_NAME =chip_name
@@ -167,7 +169,7 @@ class RTTHandler(QObject):
         Args:
             message (str): Message to send 
         """
-        if not hasattr(self,"jlink") or not self.jlinka().connected():
+        if not hasattr(self,"jlink") or not self.jlink.connected():
             print("Jlink not connected cannot send message")
             return
         #Check if message is bytes

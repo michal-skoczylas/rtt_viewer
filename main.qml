@@ -9,33 +9,36 @@ Window {
     visible: true
     title: "RTT Viewer with Directory Tree"
 
+    property string selectedSavePath: "" // <-- przeniesione na poziom Window
+
+    // --- Główne tło aplikacji ---
     Rectangle {
         id: background
         anchors.fill: parent
         color: "#f3f3f3" // jasne tło
 
+        // --- SYGNAŁY Z PYTHONA ---
         Connections {
             target: rttHandler
             function onDataReady(data) {
                 dir_comboBox.model = data
             }
         }
-        Connections{
+        Connections {
             target: rttHandler
             function onProgressChanged(value){
                 fileProgressBar.value = value
             }
         }
-                property string selectedSavePath: ""
-        
         Connections {
             target: fileHandler
             function onSavePathSelected(path) {
-                selectedSavePath = path
+                window.selectedSavePath = path
                 console.log("Wybrana ścieżka do zapisu:", path)
             }
         }
 
+        // --- LISTA PLIKÓW ---
         Rectangle {
             id: listView_background
             x: 371
@@ -48,7 +51,8 @@ Window {
             ListView {
                 id: fileListView
                 anchors.fill: parent
-                model: rttHandler.get_folder_contents(dir_comboBox.currentText)
+                // Warunek na istnienie handlera!
+                model: rttHandler ? rttHandler.get_folder_contents(dir_comboBox.currentText) : []
                 delegate: Item {
                     width: fileListView.width
                     height: 40
@@ -69,21 +73,22 @@ Window {
                     MouseArea {
                         anchors.fill: parent
                         onDoubleClicked: {
-                         if (
-            dir_comboBox.currentText !== "" &&
-            modelData !== "" &&
-            selectedSavePath !== ""
-        ) {
-            rttHandler.download_file(dir_comboBox.currentText, modelData, selectedSavePath)
-        } else {
-            console.log("No folder, file or save path selected");
-        }
+                            if (
+                                dir_comboBox.currentText !== "" &&
+                                modelData !== "" &&
+                                window.selectedSavePath !== ""
+                            ) {
+                                rttHandler.download_file(dir_comboBox.currentText, modelData, window.selectedSavePath)
+                            } else {
+                                console.log("No folder, file or save path selected");
+                            }
                         }
                     }
                 }
             }
         }
 
+        // --- PANEL Z PRZYCISKAMI I WYBOREM KATALOGU ---
         Rectangle {
             id: file_background
             x: 64
@@ -109,10 +114,7 @@ Window {
                     width: 85
                     text: qsTr("Select Path")
                     onClicked: {
-                        var path = fileHandler.select_save_path()
-                        if (path !==""){
-                            console.log("Selected save path: ", path)
-                        }
+                        fileHandler.select_save_path()
                     }
                 }
 
@@ -125,31 +127,34 @@ Window {
             }
         }
 
+        // --- PRZYCISK POBIERANIA PLIKU ---
         Button {
             id: save_button
             x: 64
             y: 521
-            text: qsTr("Button")
+            text: qsTr("Download")
             onClicked:{
-                if (dir_comboBox.currentText !== "" && fileListView.currentIndex >= 0 && selectedSavePath !== "") {
+                if (dir_comboBox.currentText !== "" && fileListView.currentIndex >= 0 && window.selectedSavePath !== "") {
                     var selectedFile = fileListView.model[fileListView.currentIndex];
-                    rttHandler.download_file(dir_comboBox.currentText, selectedFile, selectedSavePath)
+                    rttHandler.download_file(dir_comboBox.currentText, selectedFile, window.selectedSavePath)
                 }else{
                     console.log("No folder or file selected");
                 }
             }
         }
 
+        // --- PRZYCISK ODSWIEŻENIA LISTY PLIKÓW NA PŁYTCE ---
         Button {
             id: rtt_conn_button
             x: 597
             y: 22
-            text: qsTr("super")
+            text: qsTr("Refresh file list")
             onClicked: {
                 rttHandler.send_file_list_message();
             }
         }
 
+        // --- PRZYCISK POWROTU DO WYBORU PŁYTKI ---
         Button {
             id: select_board_button
             x: 64
@@ -159,9 +164,9 @@ Window {
                 appManager.show_board_selector_from_main()
             }
         }
-                // ...przyciski...
-        
-               ProgressBar {
+
+        // --- PASEK POSTĘPU POBIERANIA ---
+        ProgressBar {
             id: fileProgressBar
             width: 400
             height: 24
@@ -172,19 +177,19 @@ Window {
             to: 1
             value: 0
             visible: value > 0 && value < 1
-        
+
             contentItem: Rectangle {
                 anchors.fill: parent
-                color: "#e0e0e0" // tło paska
+                color: "#e0e0e0"
                 radius: 12
-        
+
                 Rectangle {
                     width: parent.width * fileProgressBar.position
                     height: parent.height
-                    color: "limegreen" // kolor wypełnienia
+                    color: "limegreen"
                     radius: 12
                 }
             }
-        } 
+        }
     }
 }
