@@ -3,3 +3,4 @@ asyncio
 telnetlib3
 pyudev
 qasync
+pylink-square
