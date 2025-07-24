@@ -1,15 +1,24 @@
 # This Python file uses the following encoding: utf-8
 import asyncio
 import telnetlib3
-import pyudev
 import time
 import subprocess
+import sys
 from PySide6.QtCore import QObject, Slot, Signal, Property, QStringListModel
 from PySide6.QtWidgets import QFileDialog
 import tree
 import pylink
 import os
 from pylink.enums import JLinkInterfaces
+
+try:
+    import pyudev
+except ImportError:
+    pyudev = None
+try:
+    import wmi
+except ImportError:
+    wmi = None
 
 class RTTHandler(QObject):
     dataReady = Signal(list)
@@ -100,17 +109,32 @@ class RTTHandler(QObject):
     # USB device handling
     @Slot(result=list)
     def get_usb_devices(self):
-        """Returns list of connected USB devices"""
-        context = pyudev.Context()
+        """Returns list of connected USB devices (cross-platform)"""
         self._usb_devices = []
-        try:
-            for device in context.list_devices(subsystem="usb", DEVTYPE="usb_device"):
-                device_name = device.get("ID_MODEL", "Unknown")
-                self._usb_devices.append(device_name)
-            self.usb_devices_changed.emit(self._usb_devices)
-            return self._usb_devices
-        except Exception as e:
-            print(f"Error getting USB devices: {e}")
+        if sys.platform.startswith("linux") and pyudev:
+            try:
+                context = pyudev.Context()
+                for device in context.list_devices(subsystem="usb", DEVTYPE="usb_device"):
+                    device_name = device.get("ID_MODEL", "Unknown")
+                    self._usb_devices.append(device_name)
+                self.usb_devices_changed.emit(self._usb_devices)
+                return self._usb_devices
+            except Exception as e:
+                print(f"Error getting USB devices (Linux): {e}")
+                return []
+        elif sys.platform.startswith("win") and wmi:
+            try:
+                c = wmi.WMI()
+                for usb in c.Win32_USBHub():
+                    name = getattr(usb, 'Name', None) or getattr(usb, 'DeviceID', 'Unknown')
+                    self._usb_devices.append(name)
+                self.usb_devices_changed.emit(self._usb_devices)
+                return self._usb_devices
+            except Exception as e:
+                print(f"Error getting USB devices (Windows): {e}")
+                return []
+        else:
+            print("USB device listing not supported on this platform or missing dependencies.")
             return []
 
     # File operations

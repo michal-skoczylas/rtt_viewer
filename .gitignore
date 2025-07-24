@@ -92,3 +92,5 @@ tags
 *.tgz
 *.tmp
 *.cache
+# virtual env
+rtt-viewer/
